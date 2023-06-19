@@ -1,0 +1,139 @@
+from ._wkde import WeightedKernelDensityEstimation
+import torch.distributions as D
+import torch.optim as optim
+import torch
+
+class BernoulliMLE:
+    def __init__(self, weights, x_binary, n_max=5):
+        """
+        Update Bernoulli prior via maximum likelihood estimation (MLE).
+        
+        Args:
+        - weights: torch.tensor, the weights at the observed input
+        - x_binary: torch.tensor, the observed input
+        - n_max: int, the number of L-BFGS-B iteration
+        """
+        self.weights = weights.detach()
+        self.x_binary = x_binary
+        self.n_dims_binary = x_binary.size(1)
+        self.n_max = n_max
+    
+    def objective(self, w):
+        """
+        The objective of L-BFGS-B loop (maximum likelihood)
+        
+        Args:
+        - w: torch.tensor, the weights to be optimised
+        
+        Return:
+        - ans: torch.float, the negative log likelihood of the given w
+        """
+        dist = D.Bernoulli(w)
+        ans = self.weights @ dist.log_prob(self.x_binary).sum(axis=1)
+        return -1 * ans
+    
+    def transform(self, w):
+        """
+        Sigmoid transform to make w to be bounded from 0 to 1
+        
+        Args:
+        - w: torch.tensor, the weights to be optimised
+        
+        Return:
+        - w_trans: torch.tensor, the transformed weights
+        """
+        return 1/(1 + w.exp())
+
+    def closure(self):
+        """
+        A single step closure of iteration loop
+        
+        Return:
+        objective: torch.float, the negative log likelihood of the given w
+        """
+        self.lbfgs.zero_grad()
+        params = self.transform(self.x_lbfgs)
+        objective = self.objective(params)
+        objective.backward()
+        return objective
+    
+    def run(self):
+        """
+        Maximum likelihood estimation of optimal weights for the Bernoulli sampler
+        
+        Return:
+        result: torch.tensor, the optimised weights for the Bernoulli sampler
+        """
+        self.x_lbfgs = torch.ones(self.n_dims_binary) * 0.5
+        self.x_lbfgs.requires_grad = True
+        
+        self.lbfgs = optim.LBFGS(
+            [self.x_lbfgs],
+            history_size=10, 
+            max_iter=4, 
+            line_search_fn="strong_wolfe",
+        )
+        
+        for i in range(self.n_max):
+            self.lbfgs.step(self.closure)
+        result = self.transform(self.x_lbfgs).detach()
+        return result
+    
+    def update_prior(self, prior_binary):
+        """
+        Update the Bernoulli prior
+        
+        Args:
+        - prior_binary: class, the Bernoulli prior
+        
+        Return:
+        - prior_binary: class, the optimised Bernoulli prior
+        """
+        weights_updated = self.run()
+        prior_binary.probs = weights_updated
+        return prior_binary
+    
+def update_binary_prior(weights, x_binary, prior):
+    """
+    Update the Bernoulli prior
+
+    Args:
+    - weights: torch.tensor, the weghts at X_cand
+    - X_cand: torch.tensor, the mixed input
+    - prior: class, the Bernoulli prior
+
+    Return:
+    - prior: class, the optimised Bernoulli prior
+    """
+    mle_binary = BernoulliMLE(weights, x_binary)
+    prior = mle_binary.update_prior(prior)
+    return prior
+    
+def update_mixed_prior(X_cand, weights, prior, label="binary"):
+    """
+    Update the mixed prior
+
+    Args:
+    - X_cand: torch.tensor, the mixed input
+    - weights: torch.tensor, the weghts at X_cand
+    - prior: class, the mixed prior
+    - label: string, "binary" or "categorical"
+
+    Return:
+    - prior: class, the mixed prior
+    """
+    x_cont = X_cand[:, :prior.n_dims_cont]
+    x_disc = X_cand[:, prior.n_dims_cont:]
+    if label == "binary":
+        prior.prior_binary.prior_binary = update_binary_prior(
+            weights, x_disc, prior.prior_binary.prior_binary,
+        )
+    elif label == "categorical":
+        print("aa")
+    else:
+        raise ValueError("label should be either 'binary' or 'categorical'.")
+    prior.prior_cont = WeightedKernelDensityEstimation(
+        x_cont, weights, prior.n_dims_cont,
+    )
+    return prior
+
