@@ -12,7 +12,6 @@ class Sober(EmpiricalSampler):
         model,
         eps=0,
         thresh=5,
-        domain_type="mixedbinary",
         sampler_type="lfi",
     ):
         """
@@ -24,11 +23,10 @@ class Sober(EmpiricalSampler):
         - eps: float, the machine epsilon (the smallest number of floating point).
                For double precision; eps = torch.finfo().min
         - thresh: int, the number of non-zero weights which regrads anomalies.
-        - domain_type: string, prior type. Select from "continuous", "binary", "categorical", "mixedbinary", "mixedcategorical".
         - sampler_type: string, Select from "lfi" or "ts". LFI = likelihood-free inference, TS = Thompson sampling
         """
         pi, kernel = self.initialisation(model, sampler_type=sampler_type)
-        super().__init__(prior, pi, kernel, eps=eps, thresh=thresh, label=domain_type)  # EmpiricalSampler class initialisation
+        super().__init__(prior, pi, kernel, eps=eps, thresh=thresh, label=prior.type)  # EmpiricalSampler class initialisation
         
     def initialisation(self, model, sampler_type="lfi"):
         """

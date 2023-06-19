@@ -93,13 +93,104 @@ class BernoulliMLE:
         prior_binary.probs = weights_updated
         return prior_binary
     
+class CategoricalMLE:
+    def __init__(self, weights, x_disc, prior, n_max=5):
+        """
+        Update Bernoulli prior via maximum likelihood estimation (MLE).
+        
+        Args:
+        - weights: torch.tensor, the weights at the observed input
+        - x_disc: torch.tensor, the observed input
+        - prior: class, the function of categorical prior
+        - n_max: int, the number of L-BFGS-B iteration
+        """
+        self.weights = weights.detach()
+        self.x_disc = x_disc.detach()
+        self.n_dims_disc = x_disc.size(1)
+        self.n_discrete = prior.n_discrete
+        self.n_max = n_max
+    
+    def objective(self, _w):
+        """
+        The objective of L-BFGS-B loop (maximum likelihood)
+        
+        Args:
+        - w: torch.tensor, the weights to be optimised
+        
+        Return:
+        - ans: torch.float, the negative log likelihood of the given w
+        """
+        w = _w.reshape(self.n_dims_disc, self.n_discrete)
+        dist = D.Categorical(w)
+        ans = self.weights @ dist.log_prob(self.x_disc).sum(axis=1)
+        return -1 * ans
+    
+    def transform(self, w):
+        """
+        Sigmoid transform to make w to be bounded from 0 to 1
+        
+        Args:
+        - w: torch.tensor, the weights to be optimised
+        
+        Return:
+        - w_trans: torch.tensor, the transformed weights
+        """
+        return 1/(1 + w.exp())
+    
+    def closure(self):
+        """
+        A single step closure of iteration loop
+        
+        Return:
+        objective: torch.float, the negative log likelihood of the given w
+        """
+        self.lbfgs.zero_grad()
+        params = self.transform(self.x_lbfgs)
+        objective = self.objective(params)
+        objective.backward(retain_graph=True)
+        return objective
+    
+    def run(self):
+        """
+        Maximum likelihood estimation of optimal weights for the categorical sampler
+        
+        Return:
+        result: torch.tensor, the optimised weights for the Bernoulli sampler
+        """
+        self.x_lbfgs = torch.ones(self.n_dims_disc * self.n_discrete) * 0.5
+        self.x_lbfgs.requires_grad = True
+        
+        self.lbfgs = optim.LBFGS([self.x_lbfgs],
+                    history_size=10, 
+                    max_iter=4, 
+                    line_search_fn="strong_wolfe")
+                    
+        for i in range(self.n_max):
+            self.lbfgs.step(self.closure)
+        result = self.transform(self.x_lbfgs).detach()
+        return result
+    
+    def update_prior(self, prior_disc):
+        """
+        Update the categorical prior
+        
+        Args:
+        - prior_disc: class, the categorical prior
+        
+        Return:
+        - prior_disc: class, the optimised categorical prior
+        """
+        weights_updated = self.run()
+        prior_disc.cat.probs = weights_updated
+        return prior_disc
+    
 def update_binary_prior(weights, x_binary, prior):
     """
     Update the Bernoulli prior
 
     Args:
     - weights: torch.tensor, the weghts at X_cand
-    - X_cand: torch.tensor, the mixed input
+    - X_binary: torch.tensor, the binary input
     - prior: class, the Bernoulli prior
 
     Return:
@@ -107,6 +198,22 @@ def update_binary_prior(weights, x_binary, prior):
     """
     mle_binary = BernoulliMLE(weights, x_binary)
     prior = mle_binary.update_prior(prior)
+    return prior
+
+def update_categorical_prior(weights, x_disc, prior):
+    """
+    Update the categorical prior
+
+    Args:
+    - weights: torch.tensor, the weghts at X_cand
+    - X_disc: torch.tensor, the categorical input
+    - prior: class, the categorical prior
+
+    Return:
+    - prior: class, the optimised categorical prior
+    """
+    mle_disc = CategoricalMLE(weights, x_disc, prior)
+    prior =  mle_disc.update_prior(prior)
     return prior
     
 def update_mixed_prior(X_cand, weights, prior, label="binary"):
@@ -129,7 +236,9 @@ def update_mixed_prior(X_cand, weights, prior, label="binary"):
             weights, x_disc, prior.prior_binary.prior_binary,
         )
     elif label == "categorical":
-        print("aa")
+        prior.prior_disc = update_categorical_prior(
+            weights, x_disc, prior.prior_disc,
+        )
     else:
         raise ValueError("label should be either 'binary' or 'categorical'.")
     prior.prior_cont = WeightedKernelDensityEstimation(

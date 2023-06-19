@@ -65,7 +65,7 @@ class WeightsStabiliser:
             idx_nys = torch.multinomial(weights, n_nys)
         else:
             idx_nys = (weights > 0)
-            warnings("Non-zero weights are fewer than n_Nys: "+str(idx_nys.sum()))
+            warnings.warn("Non-zero weights are fewer than n_Nys: "+str(idx_nys.sum()))
         return idx_nys
     
     def deweighted_sampling(self, weights, n_samples):

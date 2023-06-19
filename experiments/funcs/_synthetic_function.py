@@ -21,18 +21,12 @@ def AckleyFunction(x):
     
 def BraninFunction(x):
     x = torch.atleast_2d(x)
-    return ((x.sin() + (3*x).cos()/2).square() / ((x/2).square()+0.3)).prod(axis=1)
-    
-    #f = (x.sin() + (3*x).cos()/2).square() / ((x/2).square()+0.3)
-    #f[f < 0] = 0
-    #f[f.isinf()] = 0
-    #f[f.isnan()] = 0
-    #return f.prod(axis=1)
+    return ((x.sin() + (3*x).cos()/2).square() / ((x/2).square()+0.3)).prod(axis=1)    
 
 def optimisant(x, i):
     return 100*(x[:,i+1] - x[:,i].pow(2)).pow(2) + (x[:,i] - 1).pow(2)
 
-def RosenblockFunction(x):
+def RosenbrockFunction(x):
     x = torch.atleast_2d(x)
     n_data, n_dims = x.size()
     return -1 * torch.cat([

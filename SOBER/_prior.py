@@ -2,7 +2,6 @@ import copy
 import torch
 import torch.distributions as D
 from torch.quasirandom import SobolEngine
-#from rdkit.Chem import MolFromSmiles, AllChem
 import numpy as np
 import pandas as pd
 
@@ -19,7 +18,7 @@ class Uniform:
         self.mins = mins
         self.maxs = maxs
         self.n_dims = n_dims
-        self.type = "uniform"
+        self.type = "continuous"
         
     def sample(self, n_samples, qmc=True):
         """
@@ -84,8 +83,9 @@ class Gaussian:
         """
         self.mu = mu
         self.cov = cov
+        self.n_dims = len(mu)
         self.mvn = D.MultivariateNormal(self.mu, self.cov)
-        self.type = "gaussian"
+        self.type = "continuous"
         
     def sample(self, n_samples):
         """
@@ -298,7 +298,7 @@ class MixedBinaryPrior:
         pdf_binary = self.prior_binary.logpdf(x_binary)
         return pdf_cont + pdf_binary
 
-class MixedPrior:
+class MixedCategoricalPrior:
     def __init__(self, n_dims_cont, n_dims_disc, n_discrete, _min, _max):
         """
         Mixed prior of categorical and uniform distributions
@@ -324,8 +324,8 @@ class MixedPrior:
         """
         mins = self.min * torch.ones(self.n_dims_cont)
         maxs = self.max * torch.ones(self.n_dims_cont)
-        self.prior_cont = Uniform(mins, maxs, self.n_dims_cont, n_samples=self.n_samples)
-        self.prior_disc = CategoricalPrior(self.n_dims_disc, self.min, self.max, self.n_discrete, n_samples=self.n_samples)
+        self.prior_cont = Uniform(mins, maxs, self.n_dims_cont)
+        self.prior_disc = CategoricalPrior(self.n_dims_disc, self.min, self.max, self.n_discrete)
         
     def sample(self, n_samples):
         """
