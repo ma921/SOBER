@@ -56,7 +56,7 @@ def fit_model(X, Y):
 
 
 if __name__ == "__main__":
-    seed=0
+    seed=10
     torch.manual_seed(seed)  # random seed
     
     # set up the experiments
