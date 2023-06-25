@@ -1,7 +1,7 @@
 import torch
 from functorch import vmap
 from SOBER._prior import MixedCategoricalPrior
-from .funcs._synthetic_function import RosenbrockFunction
+from ._synthetic_function import RosenbrockFunction
 
 def setup_rosenbrock():
     """
@@ -17,7 +17,7 @@ def setup_rosenbrock():
     n_dims = n_dims_cont + n_dims_disc # total number of dimensions
     _min, _max = -4, 11 # the lower and upper bound of continous varibales
     
-    prior = MixedCategoricalPrior(n_dims_cont, n_dims_disc, n_discrete, _min, _max)
+    prior = MixedCategoricalPrior(n_dims_cont, n_dims_disc, n_discrete, _min, _max, continous_first=True)
     TrueFunction = RosenbrockFunction
     TestFunction = vmap(RosenbrockFunction)
     

@@ -1,6 +1,6 @@
 import torch
 from SOBER._prior import MixedBinaryPrior
-from .funcs._synthetic_function import AckleyFunction
+from ._synthetic_function import AckleyFunction
 
 def setup_ackley():
     """
@@ -15,7 +15,7 @@ def setup_ackley():
     n_dims = n_dims_cont + n_dims_binary  # total number of dimensions
     _min, _max = -1, 1  # the lower and upper bound of continous varibales
 
-    prior = MixedBinaryPrior(n_dims_cont, n_dims_binary, _min, _max)
+    prior = MixedBinaryPrior(n_dims_cont, n_dims_binary, _min, _max, continous_first=True)
     TestFunction = AckleyFunction
     
     return prior, TestFunction

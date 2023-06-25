@@ -1,6 +1,6 @@
 import torch
 from SOBER._prior import Uniform
-from .funcs._synthetic_function import HartmannFunction
+from ._synthetic_function import HartmannFunction
 
 def setup_hartmann():
     """
