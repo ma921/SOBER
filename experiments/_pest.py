@@ -173,7 +173,10 @@ def setup_pest():
     n_dims = n_dims_disc # total number of dimensions
     _min, _max = 0, 4 # the lower and upper bound of categorical varibales
     
-    prior = CategoricalPrior(n_dims, _min, _max, n_discrete)
+    # Set up the categories of discrete variables
+    categories = torch.arange(n_discrete).float().repeat(n_dims_disc,1)
+    
+    prior = CategoricalPrior(categories)
     pest = PestControl(normalize=False)
     
     def eval_objective(x):

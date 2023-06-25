@@ -279,6 +279,11 @@ def setup_svm():
     n_dims = n_dims_cont + n_dims_binary  # total number of dimensions
     _min, _max = 0, 1  # the lower and upper bound of continous varibales
     
+    # Set up the bounds of the continuous domain
+    mins = _min * torch.ones(n_dims_cont)
+    maxs = _max * torch.ones(n_dims_cont)
+    bounds = torch.vstack([mins, maxs])
+    
     SVM_DIR_NAME = './experiments/dataset/' #'../experiments/dataset/'
     data_filename = 'slice_localization_data.csv'
     # The slice dataset can be downloaded from: https://archive.ics.uci.edu/ml/datasets/Relative+location+of+CT+slices+on+axial+axis
@@ -291,6 +296,11 @@ def setup_svm():
         eval_ = svm(X)
         return -1 * eval_.squeeze()
 
-    prior = MixedBinaryPrior(n_dims_cont, n_dims_binary, _min, _max, continous_first=False)
+    prior = MixedBinaryPrior(
+        n_dims_cont, 
+        n_dims_binary, 
+        bounds,
+        continous_first=False,
+    )
     
     return prior, TestFunction

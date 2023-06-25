@@ -14,8 +14,18 @@ def setup_ackley():
     n_dims_binary = 20  # number of dimensions for binary variables
     n_dims = n_dims_cont + n_dims_binary  # total number of dimensions
     _min, _max = -1, 1  # the lower and upper bound of continous varibales
+    
+    # Set up the bounds of the continuous domain
+    mins = _min * torch.ones(n_dims_cont)
+    maxs = _max * torch.ones(n_dims_cont)
+    bounds = torch.vstack([mins, maxs])
 
-    prior = MixedBinaryPrior(n_dims_cont, n_dims_binary, _min, _max, continous_first=True)
+    prior = MixedBinaryPrior(
+        n_dims_cont, 
+        n_dims_binary, 
+        bounds, 
+        continous_first=True,
+    )
     TestFunction = AckleyFunction
     
     return prior, TestFunction

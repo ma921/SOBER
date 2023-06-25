@@ -13,10 +13,13 @@ def setup_shekel():
     n_dims_cont = 4      # number of dimensions for continuous variables
     n_dims = n_dims_cont # total number of dimensions
     _min, _max = 0, 10   # the lower and upper bound of continous varibales
-    mins = _min * torch.ones(n_dims)
-    maxs = _max * torch.ones(n_dims)
     
-    prior = Uniform(mins, maxs, n_dims)
+    # Set up the bounds of the continuous domain
+    mins = _min * torch.ones(n_dims_cont)
+    maxs = _max * torch.ones(n_dims_cont)
+    bounds = torch.vstack([mins, maxs])
+    
+    prior = Uniform(bounds, n_dims_cont)
     TestFunction = ShekelFunction
     
     return prior, TestFunction
