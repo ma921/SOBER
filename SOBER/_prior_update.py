@@ -107,7 +107,7 @@ class CategoricalMLE:
         self.weights = weights.detach()
         self.x_disc = x_disc.detach()
         self.n_dims_disc = x_disc.size(1)
-        self.n_discrete = prior.n_discrete
+        self.n_categories = prior.n_categories
         self.n_max = n_max
     
     def objective(self, _w):
@@ -120,7 +120,7 @@ class CategoricalMLE:
         Return:
         - ans: torch.float, the negative log likelihood of the given w
         """
-        w = _w.reshape(self.n_dims_disc, self.n_discrete)
+        w = _w.reshape(self.n_dims_disc, self.n_categories)
         dist = D.Categorical(w)
         ans = self.weights @ dist.log_prob(self.x_disc).sum(axis=1)
         return -1 * ans
@@ -157,7 +157,7 @@ class CategoricalMLE:
         Return:
         result: torch.tensor, the optimised weights for the Bernoulli sampler
         """
-        self.x_lbfgs = torch.ones(self.n_dims_disc * self.n_discrete) * 0.5
+        self.x_lbfgs = torch.ones(self.n_dims_disc * self.n_categories) * 0.5
         self.x_lbfgs.requires_grad = True
         
         self.lbfgs = optim.LBFGS([self.x_lbfgs],

@@ -109,7 +109,10 @@ class EmpiricalSampler(RecombinationSampler):
             self.prior = update_mixed_prior(X_cand, weights, self.prior, label="categorical")
             if verbose:
                 print("The optimised weights")
-                print(self.prior.prior_disc.cat.probs)
+                print(self.prior.prior_disc.cat.probs.reshape(
+                    self.prior.prior_disc.n_dims,
+                    self.prior.prior_disc.n_categories,
+                ))
         elif self.label == "continuous":
             self.prior = WeightedKernelDensityEstimation(
                 X_cand, weights, self.prior.n_dims,
@@ -120,7 +123,9 @@ class EmpiricalSampler(RecombinationSampler):
             )
             if verbose:
                 print("The optimised weights")
-                print(self.prior.cat.probs)
+                print(self.prior.cat.probs.reshape(
+                    self.prior.n_dims, self.prior.n_categories
+                ))
         elif self.label == "binary":
             self.prior.prior_binary = update_binary_prior(
                 weights, X_cand, self.prior.prior_binary,

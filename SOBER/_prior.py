@@ -7,17 +7,15 @@ import pandas as pd
 
 
 class Uniform:
-    def __init__(self, mins, maxs, n_dims):
+    def __init__(self, bounds, n_dims):
         """
         Uniform prior class
         
         Args:
-        - mins: torch.tensor, the lower bounds of continuous variables
-        - maxs: torch.tensor, the upper bounds of continuous variables
+        - bounds: torch.tensor, the lower and upper bounds for each dimension
         - n_dims: int, the number of dimensions
         """
-        self.mins = mins
-        self.maxs = maxs
+        self.bounds = bounds
         self.n_dims = n_dims
         self.type = "continuous"
         
@@ -36,8 +34,10 @@ class Uniform:
             random_samples = SobolEngine(self.n_dims, scramble=True).draw(n_samples)
         else:
             random_samples = torch.rand(n_samples, self.n_dims)
-       
-        return self.mins.unsqueeze(0) + (self.maxs - self.mins).unsqueeze(0) * random_samples
+        
+        return self.bounds[0].unsqueeze(0) + (
+            self.bounds[1] - self.bounds[0]
+        ).unsqueeze(0) * random_samples
     
     def pdf(self, samples):
         """
@@ -49,10 +49,10 @@ class Uniform:
         Return:
         - pdfs: torch.tensor, the PDF over samples
         """
-        _pdf = torch.ones(samples.size(0)) * (1/(self.maxs - self.mins)).prod()
+        _pdf = torch.ones(samples.size(0)) * (1/(self.bounds[1] - self.bounds[0])).prod()
         _ood = torch.logical_or(
-            (samples >= self.maxs).any(axis=1), 
-            (samples <= self.mins).any(axis=1),
+            (samples >= self.bounds[1]).any(axis=1), 
+            (samples <= self.bounds[0]).any(axis=1),
         ).logical_not()
         return _pdf * _ood
     
@@ -66,10 +66,10 @@ class Uniform:
         Return:
         - pdfs: torch.tensor, the log PDF over samples
         """
-        _logpdf = torch.ones(samples.size(0)) * (1/(self.maxs - self.mins)).prod().log()
+        _logpdf = torch.ones(samples.size(0)) * (1/(self.bounds[1] - self.bounds[0])).prod().log()
         _ood = torch.logical_or(
-            (samples >= self.maxs).any(axis=1), 
-            (samples <= self.mins).any(axis=1),
+            (samples >= self.bounds[1]).any(axis=1), 
+            (samples <= self.bounds[0]).any(axis=1),
         ).logical_not()
         return _logpdf * _ood
     
@@ -113,7 +113,7 @@ class Gaussian:
         return self.mvn.log_prob(x).exp()
 
 class CategoricalPrior:
-    def __init__(self, n_dims, _min, _max, n_discrete):
+    def __init__(self, categories):
         """
         Categorical prior class
         
@@ -123,10 +123,8 @@ class CategoricalPrior:
         - _max: int, the upper bound of categorical variables
         - n_discrete: int, the number of categories for each dimension
         """
-        self.n_dims = n_dims
-        self.min = _min
-        self.max = _max
-        self.n_discrete = n_discrete
+        self.n_dims, self.n_categories = categories.shape
+        self.categories = categories
         self.type = "categorical"
         self.set_prior()
         
@@ -134,10 +132,24 @@ class CategoricalPrior:
         """
         Set parameters and functions
         """
-        weights = torch.ones(self.n_discrete) / self.n_discrete
+        weights = torch.ones(self.categories.shape) * 0.5
         self.pmf = weights.unique()[0]
-        self.cat = D.Categorical(weights.repeat(self.n_dims, 1))
-        self.discrete_candidates = torch.linspace(self.min, self.max, self.n_discrete)
+        self.cat = D.Categorical(weights)
+    
+    def find_corresponding_categories(self, indices):
+        """
+        Find the corresponding categories from the indices
+        
+        Args:
+        - indices: torch.tensor, the indices for each dimension and category
+        
+        Return:
+        - samples: torch.tensor, categories correspinding to the given indices
+        """
+        row_indices = torch.arange(self.n_dims).unsqueeze(1)
+        column_indices = indices.unsqueeze(2)
+        samples = self.categories[row_indices, column_indices].squeeze()
+        return samples
     
     def sample(self, n_samples):
         """
@@ -150,7 +162,8 @@ class CategoricalPrior:
         - samples: torch.tensor, random samples from categorical distribution
         """
         indices = self.cat.sample(torch.Size([n_samples]))
-        return self.discrete_candidates[indices]
+        samples = self.find_corresponding_categories(indices)
+        return samples
     
     def sample_both(self, n_samples):
         """
@@ -164,7 +177,8 @@ class CategoricalPrior:
         - indices: torch.tensor, indices of random samples
         """
         indices = self.cat.sample(torch.Size([n_samples]))
-        return self.discrete_candidates[indices], indices
+        samples = self.find_corresponding_categories(indices)
+        return samples, indices
     
     def pdf(self, x):
         """
@@ -227,21 +241,25 @@ class BinaryPrior:
         return self.prior_binary.log_prob(samples).sum(axis=1)
 
 class MixedBinaryPrior:
-    def __init__(self, n_dims_cont, n_dims_binary, _min, _max, continous_first=True):
+    def __init__(
+        self, 
+        n_dims_cont, 
+        n_dims_binary,
+        bounds,
+        continous_first=True,
+    ):
         """
         Mixed prior of Bernoulli and uniform distributions
         
         Args:
         - n_dims_cont: int, the number of dimensions for continuous variables
         - n_dims_binary: int, the number of dimensions for binary variables
-        - _min: int, the lower bound of continuous variables
-        - _max: int, the upper bound of continuous variables
+        - bounds: torch.tensor, the lower and upper bounds for each dimension only for continuous variables
         - continous_first: bool, the continuous variables are the first dimensions if true, otherwise not.
         """
         self.n_dims_cont = n_dims_cont
         self.n_dims_binary = n_dims_binary
-        self.min = _min
-        self.max = _max
+        self.bounds = bounds
         self.continous_first = continous_first
         self.type = "mixedbinary"
         self.set_prior()
@@ -250,9 +268,7 @@ class MixedBinaryPrior:
         """
         Set mixed prior
         """
-        mins = self.min * torch.ones(self.n_dims_cont)
-        maxs = self.max * torch.ones(self.n_dims_cont)
-        self.prior_cont = Uniform(mins, maxs, self.n_dims_cont)
+        self.prior_cont = Uniform(self.bounds, self.n_dims_cont)
         self.prior_binary = BinaryPrior(self.n_dims_binary)
         
     def separate_samples(self, x):
@@ -322,7 +338,7 @@ class MixedBinaryPrior:
         return pdf_cont + pdf_binary
 
 class MixedCategoricalPrior:
-    def __init__(self, n_dims_cont, n_dims_disc, n_discrete, _min, _max, continous_first=True):
+    def __init__(self, n_dims_cont, n_dims_disc, categories, bounds, continous_first=True):
         """
         Mixed prior of categorical and uniform distributions
         
@@ -330,15 +346,14 @@ class MixedCategoricalPrior:
         - n_dims_cont: int, the number of dimensions for continuous variables
         - n_dims_binary: int, the number of dimensions for categorical variables
         - n_discrete: int, the number of categories for each dimension
-        - _min: int, the lower bound of continuous variables
-        - _max: int, the upper bound of continuous variables
+        - bounds: torch.tensor, the lower and upper bounds for each dimension only for continuous variables
+        - categories: torch.tensor, the categories to select for categorical variables.
         - continous_first: bool, the continuous variables are the first dimensions if true, otherwise not.
         """
         self.n_dims_cont = n_dims_cont
         self.n_dims_disc = n_dims_disc
-        self.n_discrete = n_discrete
-        self.min = _min
-        self.max = _max
+        self.categories = categories
+        self.bounds = bounds
         self.continous_first = continous_first
         self.type = "mixedcategorical"
         self.set_prior()
@@ -347,10 +362,8 @@ class MixedCategoricalPrior:
         """
         Set mixed prior
         """
-        mins = self.min * torch.ones(self.n_dims_cont)
-        maxs = self.max * torch.ones(self.n_dims_cont)
-        self.prior_cont = Uniform(mins, maxs, self.n_dims_cont)
-        self.prior_disc = CategoricalPrior(self.n_dims_disc, self.min, self.max, self.n_discrete)
+        self.prior_cont = Uniform(self.bounds, self.n_dims_cont)
+        self.prior_disc = CategoricalPrior(self.categories)
         
     def separate_samples(self, x):
         """

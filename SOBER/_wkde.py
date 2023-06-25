@@ -13,6 +13,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         X,
         W,
         n_dims,
+        bounds=None,
         n_kde=4096,
         bw_method='scott',
     ):
@@ -23,11 +24,13 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         - X: torch.tensor, the observed data X
         - W: torch.tensor, the weights over X
         - n_dims: int, the number of dimensions
+        - bounds: torch.tensor, the lower and upper bounds for each dimension. If none, the bounds are ignored.
         - n_kde: int, the number of Gaussians for KDE.
         - bw_method: string, 'scott' or 'silverman'        
         """
         super().__init__(eps=0, thresh=n_kde) # WeightsStabiliser class initialisation
         self.n_dims = n_dims
+        self.bounds = bounds
         self.n_kde = min([n_kde, len(X)])
         self.bw_method = bw_method
         self.type = "continuous"
@@ -131,16 +134,24 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         """
         if cnt == 0:
             warnings.warn("invalid Gaussian in the kernel density estimation")
-            return torch.tensor([]) #torch.zeros(0, len(mean))
+            return torch.tensor([])
         elif (cov == 0).all():
             warnings.warn("invalid Gaussian in the kernel density estimation")
-            return torch.tensor([]) #torch.zeros(0, len(mean))
+            return torch.tensor([])
         else:
             cov = self.utils.make_cov_psd(cov)
-            return MultivariateNormal(
+            samples = MultivariateNormal(
                 mean,
                 cov,
             ).sample(torch.Size([cnt]))
+            
+            if not self.bounds == None:
+                # Thresholding out-of-bound samples
+                indices_min = samples < self.bounds[0]
+                indices_max = samples > self.bounds[1]
+                samples[indices_min] = self.bounds[0].repeat(cnt, 1)[indices_min]
+                samples[indices_max] = self.bounds[1].repeat(cnt, 1)[indices_max]
+            return samples
     
     def sample(self, N_rec):
         """
