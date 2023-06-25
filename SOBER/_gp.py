@@ -229,7 +229,7 @@ def predict(test_x, model):
             pred = model.likelihood(model(test_x))
     except:
         warnings.warn("Cholesky failed. Adding more jitter...")
-        with torch.no_grad(), gpytorch.settings.cholesky_jitter(float=1e-2):
+        with torch.no_grad(): #, gpytorch.settings.cholesky_jitter(float=1e-2):
             pred = model.likelihood(model(test_x))
     return pred.mean, pred.variance
 

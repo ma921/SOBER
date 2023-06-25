@@ -61,7 +61,7 @@ class WeightsStabiliser:
         - idx_nys: torch.tensor, the indices where the resamples locate.
         """
         #assert len(weights.unique()) > n_nys
-        if len(weights.unique()) > n_nys:
+        if (weights > 0).sum() > n_nys:
             idx_nys = torch.multinomial(weights, n_nys)
         else:
             idx_nys = (weights > 0)

@@ -84,10 +84,10 @@ class BernoulliMLE:
         Update the Bernoulli prior
         
         Args:
-        - prior_binary: class, the Bernoulli prior
+        - prior_binary: torch.distributions.Bernoulli, the Bernoulli prior
         
         Return:
-        - prior_binary: class, the optimised Bernoulli prior
+        - prior_binary: torch.distributions.Bernoulli, the Bernoulli prior
         """
         weights_updated = self.run()
         prior_binary.probs = weights_updated
@@ -184,21 +184,21 @@ class CategoricalMLE:
         prior_disc.cat.probs = weights_updated
         return prior_disc
     
-def update_binary_prior(weights, x_binary, prior):
+def update_binary_prior(weights, x_binary, prior_binary):
     """
     Update the Bernoulli prior
 
     Args:
     - weights: torch.tensor, the weghts at X_cand
     - X_binary: torch.tensor, the binary input
-    - prior: class, the Bernoulli prior
+    - prior_binary: torch.distributions.Bernoulli, the Bernoulli prior
 
     Return:
-    - prior: class, the optimised Bernoulli prior
+    - prior_binary: torch.distributions.Bernoulli, the Bernoulli prior
     """
     mle_binary = BernoulliMLE(weights, x_binary)
-    prior = mle_binary.update_prior(prior)
-    return prior
+    prior_binary = mle_binary.update_prior(prior_binary)
+    return prior_binary
 
 def update_categorical_prior(weights, x_disc, prior):
     """
@@ -229,8 +229,7 @@ def update_mixed_prior(X_cand, weights, prior, label="binary"):
     Return:
     - prior: class, the mixed prior
     """
-    x_cont = X_cand[:, :prior.n_dims_cont]
-    x_disc = X_cand[:, prior.n_dims_cont:]
+    x_cont, x_disc = prior.separate_samples(X_cand)
     if label == "binary":
         prior.prior_binary.prior_binary = update_binary_prior(
             weights, x_disc, prior.prior_binary.prior_binary,

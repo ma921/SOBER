@@ -1,5 +1,6 @@
 import copy
 import torch
+import warnings
 import matplotlib.pyplot as plt
 from torch.distributions.multivariate_normal import MultivariateNormal
 from ._utils import Utils
@@ -29,6 +30,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         self.n_dims = n_dims
         self.n_kde = min([n_kde, len(X)])
         self.bw_method = bw_method
+        self.type = "continuous"
 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.utils = Utils(device)
@@ -128,7 +130,11 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         - samples: torh.tensor, samples from Gaussian
         """
         if cnt == 0:
-            return torch.zeros(0, len(mean))
+            warnings.warn("invalid Gaussian in the kernel density estimation")
+            return torch.tensor([]) #torch.zeros(0, len(mean))
+        elif (cov == 0).all():
+            warnings.warn("invalid Gaussian in the kernel density estimation")
+            return torch.tensor([]) #torch.zeros(0, len(mean))
         else:
             cov = self.utils.make_cov_psd(cov)
             return MultivariateNormal(
@@ -160,8 +166,10 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
             for i, cnt in enumerate(cnt_kde)
         ])
         
-        if not len(samples) == N_rec:
+        if len(samples) > N_rec:
             indice = torch.multinomial(torch.ones(len(samples)), N_rec)
-            samples = samples[indice]        
+            samples = samples[indice]
+        elif len(samples) < N_rec:
+            breakpoint()
         return samples
     
