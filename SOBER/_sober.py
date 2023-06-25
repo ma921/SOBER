@@ -53,12 +53,13 @@ class Sober(EmpiricalSampler):
         pi, kernel = self.initialisation(model)
         super().__init__(self.prior, pi, kernel, eps=self.eps, thresh=self.thresh, label=self.prior.type)
     
-    def should_reset_prior(self, batch_size):
+    def should_reset_prior(self, batch_size, recycle_prior):
         """
         Check whether or not the prior should reset
         
         Args:
         - batch_size: int, the number of batch samples
+        - recycle_prior: bool, recycle the previous prior if true, otherwise not.
         
         Return:
         - flag: bool, the prior should reset if true, otherwise not.
@@ -80,6 +81,8 @@ class Sober(EmpiricalSampler):
         n_nonimproved_batches = n_interations - n_batches + 2
         if n_nonimproved_batches >= self.n_batches_until_reset:
             return True
+        elif not recycle_prior:
+            return True
         else:
             return False
     
@@ -90,6 +93,7 @@ class Sober(EmpiricalSampler):
         batch_size, 
         calc_obj=None, 
         return_weights=False,
+        recycle_prior=True,
         verbose=False,
     ):
         """
@@ -101,6 +105,7 @@ class Sober(EmpiricalSampler):
         - batch_size: int, the number of batch samples
         - calc_obj: class, the acquisition function (AF). Do not use AF if None.
         - return_weights: bool, return quadrature weights if true, otherwise not.
+        - recycle_prior: bool, recycle the previous prior if true, otherwise not.
         - verbose: bool, show progress if truem otherwise not.
         
         Return:
@@ -110,7 +115,7 @@ class Sober(EmpiricalSampler):
             start = time.monotonic()
             print("--- generating the candidates from pi...")
         if not self.label == "dataset":
-            if self.should_reset_prior(batch_size):
+            if self.should_reset_prior(batch_size, recycle_prior):
                 print("The prior was initialised.")
                 self.initialise_prior()
             X_cand, X_nys, weights = self.sampling_candidates(n_rec, n_nys, verbose=verbose)

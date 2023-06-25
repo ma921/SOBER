@@ -161,7 +161,7 @@ class CategoricalMLE:
         self.x_lbfgs.requires_grad = True
         
         self.lbfgs = optim.LBFGS([self.x_lbfgs],
-                    history_size=10, 
+                    history_size=10,
                     max_iter=4, 
                     line_search_fn="strong_wolfe")
                     
@@ -200,22 +200,45 @@ def update_binary_prior(weights, x_binary, prior_binary):
     prior_binary = mle_binary.update_prior(prior_binary)
     return prior_binary
 
-def update_categorical_prior(weights, x_disc, prior):
+def update_categorical_prior(weights, x_disc, prior_categorical):
     """
     Update the categorical prior
 
     Args:
     - weights: torch.tensor, the weghts at X_cand
     - X_disc: torch.tensor, the categorical input
-    - prior: class, the categorical prior
+    - prior_categorical: torch.distributions.Categorical, the Categorical prior
 
     Return:
-    - prior: class, the optimised categorical prior
+    - prior_categorical: torch.distributions.Categorical, the optimised Categorical prior
     """
-    mle_disc = CategoricalMLE(weights, x_disc, prior)
-    prior =  mle_disc.update_prior(prior)
+    mle_disc = CategoricalMLE(weights, x_disc, prior_categorical)
+    prior_categorical =  mle_disc.update_prior(prior_categorical)
+    return prior_categorical
+
+def update_continuous_prior(X_cand, weights, prior, n_dims):
+    """
+    Update the continuous prior
+
+    Args:
+    - X_cand: torch.tensor, the mixed input
+    - weights: torch.tensor, the weghts at X_cand
+    - prior: class, the continuous prior
+    - n_dims: int, the number of dimensions
+
+    Return:
+    - prior: class, the Gaussian mixture prior
+    """
+    if hasattr(prior, "bounds"):
+        bounds = prior.bounds
+    else:
+        bounds = None
+        
+    prior = WeightedKernelDensityEstimation(
+        X_cand, weights, n_dims, bounds=bounds,
+    )
     return prior
-    
+
 def update_mixed_prior(X_cand, weights, prior, label="binary"):
     """
     Update the mixed prior
@@ -240,8 +263,7 @@ def update_mixed_prior(X_cand, weights, prior, label="binary"):
         )
     else:
         raise ValueError("label should be either 'binary' or 'categorical'.")
-    prior.prior_cont = WeightedKernelDensityEstimation(
-        x_cont, weights, prior.n_dims_cont,
-    )
+    
+    prior.prior_cont = update_continuous_prior(x_cont, weights, prior, prior.n_dims_cont)
     return prior
 

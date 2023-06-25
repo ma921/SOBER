@@ -1,10 +1,9 @@
 import copy
 import torch
 import warnings
-from ._prior_update import update_mixed_prior, update_binary_prior, update_categorical_prior
+from ._prior_update import update_mixed_prior, update_binary_prior, update_categorical_prior, update_continuous_prior
 from ._weights import WeightsStabiliser
 from ._rchq import recombination
-from ._wkde import WeightedKernelDensityEstimation
 
 
 class RecombinationSampler(WeightsStabiliser):
@@ -99,6 +98,11 @@ class EmpiricalSampler(RecombinationSampler):
     def update_prior(self, X_cand, weights, verbose=False):
         """
         Update prior
+        
+        Args:
+        - X_cand: torch.tensor, samples
+        - weights: torch.tensor, weights
+        - verbose: bool, show progress if truem otherwise not.
         """
         if self.label == "mixedbinary":
             self.prior = update_mixed_prior(X_cand, weights, self.prior, label="binary")
@@ -114,9 +118,10 @@ class EmpiricalSampler(RecombinationSampler):
                     self.prior.prior_disc.n_categories,
                 ))
         elif self.label == "continuous":
-            self.prior = WeightedKernelDensityEstimation(
-                X_cand, weights, self.prior.n_dims,
+            self.prior = update_continuous_prior(
+                X_cand, weights, self.prior, self.prior.n_dims,
             )
+            
         elif self.label == "categorical":
             self.prior = update_categorical_prior(
                 weights, X_cand, self.prior,
