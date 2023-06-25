@@ -48,7 +48,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         - Y: torch.tensor, the unnormalised weights
         """
         if self.check_weights(Y):
-            idx_accept = self.deweighted_sampling(Y, self.n_kde)
+            idx_accept = self.deweighted_resampling(Y, self.n_kde)
         else:
             idx_accept = torch.arange(Y.size(0))[self.cleansing_weights(Y) > 0]
             self.n_kde = len(idx_accept)

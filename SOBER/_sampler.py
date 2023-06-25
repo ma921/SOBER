@@ -298,7 +298,7 @@ class EmpiricalSampler(RecombinationSampler):
                 self.thresh = n_nys
                 X_cand, weights = self.recursive_sampling(n_rec, n_repeat=self.thresh, verbose=verbose)
         
-        idx_nys = self.weighted_resampling(weights, n_nys)
+        idx_nys = self.deweighted_resampling(weights, n_nys)
         X_nys = X_cand[idx_nys]
         self.thresh = copy.deepcopy(self.thresh_initial)
         return X_cand, X_nys, weights
@@ -326,6 +326,6 @@ class EmpiricalSampler(RecombinationSampler):
         weights = self.pi(X_cand)
         weights = self.cleansing_weights(weights)
         
-        idx_nys = self.weighted_resampling(weights, n_nys)
+        idx_nys = self.deweighted_resampling(weights, n_nys)
         X_nys = X_cand[idx_nys]
         return X_cand, X_nys, weights

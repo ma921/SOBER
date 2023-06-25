@@ -68,7 +68,7 @@ class WeightsStabiliser:
             warnings.warn("Non-zero weights are fewer than n_Nys: "+str(idx_nys.sum()))
         return idx_nys
     
-    def deweighted_sampling(self, weights, n_samples):
+    def deweighted_resampling(self, weights, n_samples):
         """
         Uniform resampling from weighted samples
         
