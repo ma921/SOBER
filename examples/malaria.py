@@ -11,15 +11,16 @@ from botorch.fit import fit_gpytorch_model
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from experiments._ackley import setup_ackley
+from experiments._malaria import setup_malaria
 from SOBER._sober import Sober
+from SOBER._drug_modelling import TanimotoGP
 warnings.filterwarnings('ignore')
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 
-def set_rbf_model(X, Y):
+def set_tanimoto_gp_model(X, Y):
     """
-    Set up the Gaussian process model with RBF kernel.
+    Set up the Gaussian process model with Tanimoto kernel.
     
     Args:
     - X: torch.tensor, the observed input X
@@ -28,14 +29,9 @@ def set_rbf_model(X, Y):
     Return:
     - model: gpytorch.models, function of GP model.
     """
-    base_kernel = RBFKernel()
-    covar_module = ScaleKernel(base_kernel)
-
-    # Fit a GP model
     train_Y = (Y - Y.mean()) / Y.std()
     train_Y = train_Y.view(-1).unsqueeze(1)
-    likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
-    model = SingleTaskGP(X, train_Y, likelihood=likelihood, covar_module=covar_module)
+    model = TanimotoGP(X, train_Y)
     return model
 
 def fit_model(X, Y):
@@ -49,7 +45,7 @@ def fit_model(X, Y):
     Return:
     - model: gpytorch.models, the optimised GP model.
     """
-    model = set_rbf_model(X, Y)
+    model = set_tanimoto_gp_model(X, Y)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_model(mll)
     return model
@@ -60,18 +56,17 @@ if __name__ == "__main__":
     torch.manual_seed(seed)  # random seed
     
     # set up the experiments
-    prior, TrueFunction = setup_ackley()
+    prior = setup_malaria()
     
-    batch_size = 200   # number of batch samples
+    batch_size = 100   # number of batch samples
     n_rec = 20000      # number of candidates sampled from pi
     n_nys = 500        # number of samples for Nyström approximation
     n_init = 100       # number of initial samples
     n_iterations = 15  # number of iterations (batches)
 
     # initial sampling
-    Xall = prior.sample(n_init)
-    Yall = TrueFunction(Xall)
-    model = set_rbf_model(Xall, Yall)
+    Xall, Yall = prior.sample(n_init)
+    model = set_tanimoto_gp_model(Xall, Yall)
     sober = Sober(prior, model)
 
     results = []
@@ -90,7 +85,7 @@ if __name__ == "__main__":
         end = time.monotonic()
         interval = end - start
 
-        Y = TrueFunction(X)
+        Y = prior.query(X)
         Xall = torch.cat((Xall, X), dim=0)
         Yall = torch.cat((Yall, Y), dim=0)
 

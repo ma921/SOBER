@@ -71,14 +71,22 @@ if __name__ == "__main__":
     # initial sampling
     Xall = prior.sample(n_init)
     Yall = TrueFunction(Xall)
+    model = set_rbf_model(Xall, Yall)
+    sober = Sober(prior, model)
 
     results = []
     obj = None
     for n_iter in range(n_iterations):
         start = time.monotonic()
         model = fit_model(Xall, Yall)
-        sober = Sober(prior, model)
-        X = sober(n_rec, n_nys, batch_size, calc_obj=None)
+        sober.update_model(model)
+        X = sober.next_batch(
+            n_rec,
+            n_nys,
+            batch_size,
+            calc_obj=None,  # Whether using an acquisition function
+            verbose=False,   # Whether showing the detailed progress
+        )
         end = time.monotonic()
         interval = end - start
 

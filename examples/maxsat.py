@@ -11,7 +11,7 @@ from botorch.fit import fit_gpytorch_model
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from experiments._ackley import setup_ackley
+from experiments._maxsat import setup_maxsat
 from SOBER._sober import Sober
 warnings.filterwarnings('ignore')
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     torch.manual_seed(seed)  # random seed
     
     # set up the experiments
-    prior, TrueFunction = setup_ackley()
+    prior, TrueFunction = setup_maxsat()
     
     batch_size = 200   # number of batch samples
     n_rec = 20000      # number of candidates sampled from pi
