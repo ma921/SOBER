@@ -255,7 +255,7 @@ class MixedBinaryPrior:
         - n_dims_cont: int, the number of dimensions for continuous variables
         - n_dims_binary: int, the number of dimensions for binary variables
         - bounds: torch.tensor, the lower and upper bounds for each dimension only for continuous variables
-        - continous_first: bool, the continuous variables are the first dimensions if true, otherwise not.
+        - continous_first: bool, [cont, binary] if true, otherwise [binary, cont].
         """
         self.n_dims_cont = n_dims_cont
         self.n_dims_binary = n_dims_binary
@@ -348,7 +348,7 @@ class MixedCategoricalPrior:
         - n_discrete: int, the number of categories for each dimension
         - bounds: torch.tensor, the lower and upper bounds for each dimension only for continuous variables
         - categories: torch.tensor, the categories to select for categorical variables.
-        - continous_first: bool, the continuous variables are the first dimensions if true, otherwise not.
+        - continous_first: bool, [cont, categorical] if true, otherwise [categorical, cont].
         """
         self.n_dims_cont = n_dims_cont
         self.n_dims_disc = n_dims_disc
