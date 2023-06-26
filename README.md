@@ -8,7 +8,7 @@ This repository contains the python code that was presented for the following pa
 ![Animate](./docs/animated.gif)
 
 ## Brief explanation
-![plot](./docs/visula_explanation.png)<br>
+![plot](./docs/visual_explanation.png)<br>
 
 We query 100 points in parallel to the true posterior distribution. Colours represent the GP surrogate model trying to approximate the three true posteriors (Ackley, Oscillatory, Branin-Hoo, see Supplementary Figure 4 for details).
 The black dots in the animated GIF is the proposed points by BASQ for each iteration. At the third iteration, BASQ can capture the whole posterior surface.
