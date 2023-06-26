@@ -24,7 +24,7 @@ def setup_ackley():
         n_dims_cont, 
         n_dims_binary, 
         bounds, 
-        continous_first=True,
+        continous_first=True, # [cont, binary] if true, otherwise [binary, cont]
     )
     TestFunction = AckleyFunction
     

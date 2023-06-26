@@ -6,6 +6,14 @@ from abc import abstractmethod
 from SOBER._prior import DatasetPrior
 from experiments._generate_drug_dataset import create_malaria_dataset
 
+
+def featurise_dataset():
+    MALARIA_DIR_NAME = "../experiments/dataset/"
+    # dataset can be downloaded in  https://www.mmv.org/mmv-open/malaria-box/malaria-box-supporting-information
+    data_filename = "malaria_box_dataset.csv"
+    data_path = os.path.join(MALARIA_DIR_NAME, data_filename)
+    features, true_targets = create_malaria_dataset(data_path)
+    return features, true_targets
     
 def setup_malaria():
     """
@@ -14,11 +22,7 @@ def setup_malaria():
     Return:
     - prior: class, the function of binary prior
     """
-    MALARIA_DIR_NAME = "../experiments/dataset/"
-    # dataset can be downloaded in  https://www.mmv.org/mmv-open/malaria-box/malaria-box-supporting-information
-    data_filename = "malaria_box_dataset.csv"
-    data_path = os.path.join(MALARIA_DIR_NAME, data_filename)
-    features, true_targets = create_malaria_dataset(data_path)
+    features, true_targets = featurise_dataset()
     prior = DatasetPrior(features, true_targets)
     
     return prior
