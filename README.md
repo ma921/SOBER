@@ -13,14 +13,6 @@ This repository contains the python code that was presented for the following pa
 - Branin function: blackbox function to maximise
 - $\pi$: the probability of global optimum locations estimated by SOBER
 
-## Brief explanation
-![plot](./docs/visual_explanation.png)<br>
-
-We solve batch global optimization as Bayesian quadrature;
-![plot](./docs/equation.png)<br>
-We select the batch query locations to minimize the integration error of the true function $f_\text{true}$ over the probability measure $\pi$.
-$\pi$ is the probability of global optimum locations estimated by SOBER, and becomes confident (shrink toward true global optima) over iterations.
-
 ## Features
 - fast batch Bayesian optimization
 - fast batch Bayesian quadrature
@@ -32,11 +24,6 @@ $\pi$ is the probability of global optimum locations estimated by SOBER, and bec
 - Arbitrary kernel for surrogate modelling
 - Arbitrary acquisition function
 - Arbitrary prior distribution for Bayesian inference
-
-## Requirements
-- PyTorch
-- GPyTorch
-- BoTorch
 
 ## Tutorials for practitioners/researchers
 We prepared the detailed explanations about how to customize SOBER for your tasks. <br>
@@ -50,6 +37,19 @@ See `tutorials`.
 
 ## Examples
 See `examples` for reproducing the results in the paper.
+
+## Brief explanation
+![plot](./docs/visual_explanation.png)<br>
+
+We solve batch global optimization as Bayesian quadrature;
+![plot](./docs/equation.png)<br>
+We select the batch query locations to minimize the integration error of the true function $f_\text{true}$ over the probability measure $\pi$.
+$\pi$ is the probability of global optimum locations estimated by SOBER, and becomes confident (shrink toward true global optima) over iterations.
+
+## Requirements
+- PyTorch
+- GPyTorch
+- BoTorch
 
 ## Cite as
 Please cite this work as
