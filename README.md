@@ -39,8 +39,8 @@ $\pi$ is the probability of global optimum locations estimated by SOBER, and bec
 - BoTorch
 
 ## Tutorials for practitioners/researchers
-We prepared the detailed explanations about how to customize SOBER for your tasks.
-See ./tutorials
+We prepared the detailed explanations about how to customize SOBER for your tasks. <br>
+See `tutorials`.
 - 01 How does SOBER work?
 - 02 Customise prior for various domain type
 - 03 Customise acquisition function
@@ -49,7 +49,7 @@ See ./tutorials
 - 06 Deep learning based sampler for drug discovery
 
 ## Examples
-See ./examples for reproducing the results in the paper.
+See `examples` for reproducing the results in the paper.
 
 ## Cite as
 Please cite this work as
