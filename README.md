@@ -7,10 +7,22 @@ This repository contains the python code that was presented for the following pa
 
 ![Animate](./docs/animated.gif)
 
+- Red star: ground truth
+- black crosses: next batch queries recommended by SOBER
+- white dots: historical observations
+- Branin function: blackbox function to maximise
+- $\pi$: the probability of global optima locations estimated by SOBER
+
 ## Brief explanation
 ![plot](./docs/visual_explanation.png)<br>
 
-We query 100 points in parallel to the true posterior distribution. Colours represent the GP surrogate model trying to approximate the three true posteriors (Ackley, Oscillatory, Branin-Hoo, see Supplementary Figure 4 for details).
+We solve batch global optimization as Bayesian quadrature;
+$$x^*_\text{true} = $$
+\text{argmax}_x f_\text{true}(x)
+\delta_{x^*_\text{true}} \in \arg \max_{\pi} \int f_\text{true}(x) \text{d}\pi(x)
+\quad \xLeftrightarrow{\text{dual}} \quad 
+
+We query 10 points in parallel to the true blackbox function. Colours represent the GP surrogate model trying to approximate the three true posteriors (Ackley, Oscillatory, Branin-Hoo, see Supplementary Figure 4 for details).
 The black dots in the animated GIF is the proposed points by BASQ for each iteration. At the third iteration, BASQ can capture the whole posterior surface.
 
 For understanding SOBER, see tutorials. <br>
