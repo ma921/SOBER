@@ -105,6 +105,14 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
             self.covariance,
             x_AA,
         ).reshape(n_X, self.n_kde)
+        
+        if not self.bounds == None:
+            # Thresholding out-of-bound samples
+            indices_min = (X < self.bounds[0]).any(axis=1)
+            indices_max = (X > self.bounds[1]).any(axis=1)
+            Npdfs_AA[indices_min] = torch.zeros(self.n_kde)
+            Npdfs_AA[indices_max] = torch.zeros(self.n_kde)
+        
         Ypreds = self.weights @ Npdfs_AA.T
         return Ypreds
     

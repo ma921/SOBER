@@ -32,6 +32,7 @@ class Sober(EmpiricalSampler):
             self.fbgp = True
             self.n_init = len(model.fobs)
         else:
+            self.fbgp = False
             self.n_init = len(model.train_targets)
         
         pi, kernel = self.initialisation(model)
