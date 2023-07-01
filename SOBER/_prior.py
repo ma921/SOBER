@@ -74,9 +74,10 @@ class Uniform:
         return _logpdf * _ood
     
 class Gaussian:
-    def __init__(self, mu, cov):
+    def __init__(self, mu, cov, bounds=None):
         """
-        Gaussian prior class
+        Gaussian prior class.
+        When bounded, this becomes truncated Gaussian distribution.
         
         Args:
         - mu: torch.tensor, the mean vector of Gaussian distribution
@@ -87,6 +88,8 @@ class Gaussian:
         self.n_dims = len(mu)
         self.mvn = D.MultivariateNormal(self.mu, self.cov)
         self.type = "continuous"
+        if not bounds == None:
+            self.bounds = bounds
         
     def sample(self, n_samples):
         """
@@ -98,11 +101,22 @@ class Gaussian:
         Return:
         - samples: torch.tensor, the samples from Gaussian prior
         """
-        return self.mvn.sample(torch.Size([n_samples]))
+        samples = self.mvn.sample(torch.Size([n_samples]))
+        if hasattr(self, "bounds"):
+            # Thresholding out-of-bound samples
+            indices_min = samples < self.bounds[0]
+            indices_max = samples > self.bounds[1]
+            samples[indices_min] = self.bounds[0].repeat(n_samples, 1)[indices_min]
+            samples[indices_max] = self.bounds[1].repeat(n_samples, 1)[indices_max]
+            return samples
+        else:
+            return samples
     
     def pdf(self, x):
         """
-        The probability density function (PDF) over x
+        The probability density function (PDF) over x.
+        When bounded, the pdf is unnormalised.
+        (but it's ok as SOBER discretises the samples. Just renormalising.)
         
         Args:
         - x: torch.tensor, the input where to compute PDF
@@ -110,7 +124,16 @@ class Gaussian:
         Return:
         - pdfs: torch.tensor, the PDF over x
         """
-        return self.mvn.log_prob(x).exp()
+        pdfs = self.mvn.log_prob(x).exp()
+        if hasattr(self, "bounds"):
+            # Thresholding out-of-bound samples
+            indices_min = (x < self.bounds[0]).any(axis=1)
+            indices_max = (x > self.bounds[1]).any(axis=1)
+            pdfs[indices_min] = torch.zeros(len(x))[indices_min]
+            pdfs[indices_max] = torch.zeros(len(x))[indices_max]
+            return pdfs
+        else:
+            return pdfs
 
 class CategoricalPrior:
     def __init__(self, categories):
