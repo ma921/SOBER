@@ -155,7 +155,7 @@ def train_GP_with_Adam(mll, lr, training_iter, thresh):
     return mll
 
 
-def train_GP(model, training_iter=50, thresh=0.01, lr=0.1, optimiser="L-BFGS-B"):
+def train_GP(model, training_iter=50, thresh=0.01, lr=0.1, optimiser="BoTorch"):
     """
     Args:
         - model: gpytorch.models, function of GP model.
@@ -186,7 +186,7 @@ def train_GP(model, training_iter=50, thresh=0.01, lr=0.1, optimiser="L-BFGS-B")
     return model
 
 
-def update_gp(train_x, train_y, gp_kernel, device, lik=1e-10, training_iter=50, thresh=0.01, lr=0.1, rng=10, train_lik=False, optimiser="L-BFGS-B"):
+def update_gp(train_x, train_y, gp_kernel, device, lik=1e-10, training_iter=50, thresh=0.01, lr=0.1, rng=10, train_lik=False, optimiser="BoTorch"):
     """
     Input:
         - train_x: torch.tensor, inputs. torch.Size(n_data, n_dims)

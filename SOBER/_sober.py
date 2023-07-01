@@ -4,7 +4,7 @@ import torch
 import warnings
 from ._sampler import EmpiricalSampler
 from ._kernel import Kernel
-from ._pi import PI
+from ._pi import PI, PI_FBGP
 
 class Sober(EmpiricalSampler):
     def __init__(
@@ -16,7 +16,7 @@ class Sober(EmpiricalSampler):
         sampler_type="lfi",
     ):
         """
-        Sampling from pi.
+        Batch Bayesian optimisation as batch Bayesian quadrature
         
         Args:
         - prior: class, the class of prior distribution
@@ -27,8 +27,14 @@ class Sober(EmpiricalSampler):
         - sampler_type: string, Select from "lfi" or "ts". LFI = likelihood-free inference, TS = Thompson sampling
         """
         self.sampler_type = sampler_type
+        # check fully Bayesian GP model or not
+        if hasattr(model, "is_fbgp"):
+            self.fbgp = True
+            self.n_init = len(model.fobs)
+        else:
+            self.n_init = len(model.train_targets)
+        
         pi, kernel = self.initialisation(model)
-        self.n_init = len(model.train_targets)
         self.n_batches_until_reset = 3
         super().__init__(prior, pi, kernel, eps=eps, thresh=thresh, label=prior.type)  # EmpiricalSampler class initialisation
     
@@ -39,8 +45,12 @@ class Sober(EmpiricalSampler):
         Args:
         - model: gpytorch.models, function of GP model.
         """
-        pi = PI(model, label=self.sampler_type)
-        kernel = Kernel(model)
+        if not self.fbgp:
+            pi = PI(model, label=self.sampler_type)
+            kernel = Kernel(model)
+        else:
+            pi = PI_FBGP(model)
+            kernel = model.marginal_predictive_covariance
         return pi, kernel
     
     def update_model(self, model):
@@ -64,7 +74,11 @@ class Sober(EmpiricalSampler):
         Return:
         - flag: bool, the prior should reset if true, otherwise not.
         """
-        targets = self.pi.model.train_targets
+        if not self.fbgp:
+            targets = self.pi.model.train_targets
+        else:
+            targets = self.pi.model.fobs
+        
         n_targets = len(targets)
         y_max = targets.max()
         cummax = targets.cummax(0).values

@@ -2,28 +2,33 @@ from ._gp import predictive_covariance, predict_mean
 import torch.distributions as D
 
 class Kernel:
-    def __init__(self, model, weighted=False):
+    def __init__(self, model, mode="predictive_covariance"):
         """
         Definition of kernel for recombination.
         
         Args:
         - model: gpytorch.models, function of GP model
-        - weighted: bool, weighted kernel if True, otherwise normal predictive covariance
+        - mode: string, select from ["predictive_covariance", "weighted_predictive_covariance", "kernel"]
         """
         self.model = model
-        self.weighted = weighted
+        self.mode = mode
     
     def __call__(self, x, y):
         """
-        Compute the Gram matrix
+        Compute the Gram matrix of posterior predictive covariance
         
         Return:
         - CLy: torch.tensor, the Gram matrix with the posterior predictive covariance
         """
-        if self.weighted:
-            return self.weighted_covariance(x, y)
-        else:
+        if self.mode == "predictive_covariance":
             return predictive_covariance(x, y, self.model)
+        elif self.mode == "weighted_predictive_covariance":
+            return self.weighted_covariance(x, y)
+        elif self.mode == "kernel":
+            return self.model.covar_module.forward(x, y)
+        else:
+            raise ValueError('mode should be from ["predictive_covariance", "weighted_predictive_covariance", "kernel"]')
+            
     
     def weighted_covariance(self, x, y):
         """
