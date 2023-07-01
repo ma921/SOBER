@@ -93,7 +93,6 @@ class Gaussian:
         
         Args:
         - n_samples: int, the number of initial samples
-        - n_repeat: int, the number of iteration until len(samples) >= n_samples
         
         Return:
         - samples: torch.tensor, the samples from Gaussian prior
@@ -104,8 +103,6 @@ class Gaussian:
     def pdf(self, x):
         """
         The probability density function (PDF) over x.
-        When bounded, the pdf is unnormalised.
-        (but it's ok as SOBER discretises the samples. Just renormalising.)
         
         Args:
         - x: torch.tensor, the input where to compute PDF
