@@ -27,18 +27,26 @@ class Sober(EmpiricalSampler):
         - sampler_type: string, Select from "lfi" or "ts". LFI = likelihood-free inference, TS = Thompson sampling
         """
         self.sampler_type = sampler_type
-        # check fully Bayesian GP model or not
-        if hasattr(model, "is_fbgp"):
-            self.fbgp = True
-            self.n_init = len(model.fobs)
-        else:
-            self.fbgp = False
-            self.n_init = len(model.train_targets)
-        
+        self.check_model_type(model)
         pi, kernel = self.initialisation(model)
         self.n_batches_until_reset = 3
         super().__init__(prior, pi, kernel, eps=eps, thresh=thresh, label=prior.type)  # EmpiricalSampler class initialisation
     
+    def check_model_type(self, model):
+        # check fully Bayesian GP model or not
+        if hasattr(model, "is_fbgp"):
+            self.fbgp = True
+            self.is_bq = False
+            self.n_init = len(model.fobs)
+        elif hasattr(model, "is_bq"):
+            self.fbgp = False
+            self.is_bq = True
+            self.n_init = len(model.fobs)
+        else:
+            self.fbgp = False
+            self.is_bq = False
+            self.n_init = len(model.train_targets)            
+        
     def initialisation(self, model):
         """
         Set pi and kernel

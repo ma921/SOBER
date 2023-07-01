@@ -4,7 +4,8 @@ import torch.distributions as D
 from torch.quasirandom import SobolEngine
 import numpy as np
 import pandas as pd
-
+from ._tmvn import TruncatedMVN
+from .mvnorm import multivariate_normal_cdf as Phi
 
 class Uniform:
     def __init__(self, bounds, n_dims):
@@ -74,43 +75,31 @@ class Uniform:
         return _logpdf * _ood
     
 class Gaussian:
-    def __init__(self, mu, cov, bounds=None):
+    def __init__(self, mu, cov):
         """
         Gaussian prior class.
-        When bounded, this becomes truncated Gaussian distribution.
         
         Args:
         - mu: torch.tensor, the mean vector of Gaussian distribution
         - cov: torch.tensor, the covariance matrix of Gaussian distribution
         """
-        self.mu = mu
-        self.cov = cov
         self.n_dims = len(mu)
-        self.mvn = D.MultivariateNormal(self.mu, self.cov)
+        self.mvn = D.MultivariateNormal(mu, cov)
         self.type = "continuous"
-        if not bounds == None:
-            self.bounds = bounds
-        
+    
     def sample(self, n_samples):
         """
         Sampling from Gaussian prior
         
         Args:
         - n_samples: int, the number of initial samples
+        - n_repeat: int, the number of iteration until len(samples) >= n_samples
         
         Return:
         - samples: torch.tensor, the samples from Gaussian prior
         """
         samples = self.mvn.sample(torch.Size([n_samples]))
-        if hasattr(self, "bounds"):
-            # Thresholding out-of-bound samples
-            indices_min = samples < self.bounds[0]
-            indices_max = samples > self.bounds[1]
-            samples[indices_min] = self.bounds[0].repeat(n_samples, 1)[indices_min]
-            samples[indices_max] = self.bounds[1].repeat(n_samples, 1)[indices_max]
-            return samples
-        else:
-            return samples
+        return samples
     
     def pdf(self, x):
         """
@@ -125,15 +114,56 @@ class Gaussian:
         - pdfs: torch.tensor, the PDF over x
         """
         pdfs = self.mvn.log_prob(x).exp()
-        if hasattr(self, "bounds"):
-            # Thresholding out-of-bound samples
-            indices_min = (x < self.bounds[0]).any(axis=1)
-            indices_max = (x > self.bounds[1]).any(axis=1)
-            pdfs[indices_min] = torch.zeros(len(x))[indices_min]
-            pdfs[indices_max] = torch.zeros(len(x))[indices_max]
-            return pdfs
-        else:
-            return pdfs
+        return pdfs
+        
+class TruncatedGaussian:
+    def __init__(self, mu, cov, bounds):
+        """
+        Truncated Gaussian prior class.
+        
+        Args:
+        - mu: torch.tensor, the mean vector of Gaussian distribution
+        - cov: torch.tensor, the covariance matrix of Gaussian distribution
+        """
+        self.n_dims = len(mu)
+        self.mvn = D.MultivariateNormal(mu, cov)
+        self.type = "continuous"
+        self.bounds = bounds
+        p_lb = Phi(bounds[0], loc=mu, covariance_matrix=cov)
+        p_ub = Phi(bounds[1], loc=mu, covariance_matrix=cov)
+        self.constant = p_ub - p_lb
+        self.tmvn = TruncatedMVN(mu, cov, bounds)
+    
+    def sample(self, n_samples):
+        """
+        Sampling from Gaussian prior
+        
+        Args:
+        - n_samples: int, the number of initial samples
+        
+        Return:
+        - samples: torch.tensor, the samples from Gaussian prior
+        """
+        samples = self.tmvn.sample(n_samples)
+        return samples
+    
+    def pdf(self, x):
+        """
+        The probability density function (PDF) over x.
+        
+        Args:
+        - x: torch.tensor, the input where to compute PDF
+        
+        Return:
+        - pdfs: torch.tensor, the PDF over x
+        """
+        pdfs = self.mvn.log_prob(x).exp() / self.constant
+        # Thresholding out-of-bound samples
+        indices_min = (x < self.bounds[0]).any(axis=1)
+        indices_max = (x > self.bounds[1]).any(axis=1)
+        pdfs[indices_min] = torch.zeros(len(x))[indices_min]
+        pdfs[indices_max] = torch.zeros(len(x))[indices_max]
+        return pdfs
 
 class CategoricalPrior:
     def __init__(self, categories):
