@@ -4,7 +4,7 @@ import torch
 import warnings
 from ._sampler import EmpiricalSampler
 from ._kernel import Kernel
-from ._pi import PI, PI_FBGP
+from ._pi import PI, PI_FBGP, PI_BQ
 
 class Sober(EmpiricalSampler):
     def __init__(
@@ -41,7 +41,7 @@ class Sober(EmpiricalSampler):
         elif hasattr(model, "is_bq"):
             self.fbgp = False
             self.is_bq = True
-            self.n_init = len(model.fobs)
+            self.n_init = len(model.Y_log)
         else:
             self.fbgp = False
             self.is_bq = False
@@ -54,12 +54,15 @@ class Sober(EmpiricalSampler):
         Args:
         - model: gpytorch.models, function of GP model.
         """
-        if not self.fbgp:
-            pi = PI(model, label=self.sampler_type)
-            kernel = Kernel(model)
-        else:
+        if self.fbgp:
             pi = PI_FBGP(model)
             kernel = model.marginal_predictive_covariance
+        elif self.is_bq:
+            pi = PI_BQ(model)
+            kernel = model.gspace_kernel
+        else:
+            pi = PI(model, label=self.sampler_type)
+            kernel = Kernel(model)
         return pi, kernel
     
     def update_model(self, model):
@@ -83,10 +86,12 @@ class Sober(EmpiricalSampler):
         Return:
         - flag: bool, the prior should reset if true, otherwise not.
         """
-        if not self.fbgp:
-            targets = self.pi.model.train_targets
-        else:
+        if self.fbgp:
             targets = self.pi.model.fobs
+        elif self.is_bq:
+            targets = self.pi.model.Y_log
+        else:
+            targets = self.pi.model.train_targets
         
         n_targets = len(targets)
         y_max = targets.max()

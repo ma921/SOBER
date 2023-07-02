@@ -100,3 +100,49 @@ class PI_FBGP:
         - pi: torch.tensor, the pi values at X_cand
         """
         return self.lfi(X_cand, log=log)
+
+class PI_BQ:
+    def __init__(self, model):
+        """
+        Definition of pi (feasible resion) for Bayesian Quadrature GP model.
+        For BQ modelling, see https://arxiv.org/abs/2210.17299
+        
+        Args:
+        - model: gpytorch.models, function of GP model
+        - label: string, "ts" or "lfi"
+        """
+        self.model = model
+    
+    def lfi(self, X_cand, log=False):
+        """
+        Compute LFI at given locations X_cand
+        
+        Args:
+        - X_cand: torch.tensor, inputs X where to compute LFI
+        - log: bool: return log value if true, otherwise not.
+        
+        Return:
+        - lfi: torch.tensor, the LFI values at X_cand
+        """
+        mu_pred, var_pred = self.model.gspace_predict(X_cand)
+        lfi = D.Normal(0,1).cdf(
+            (mu_pred - 1) / var_pred.sqrt()
+        )
+        if log:
+            return lfi.log()
+        else:
+            return lfi
+    
+    def __call__(self, X_cand, log=False):
+        """
+        Compute pi at given locations X_cand
+        
+        Args:
+        - X_cand: torch.tensor, inputs X where to compute LFI
+        - log: bool: return log value if true, otherwise not.
+        
+        Return:
+        - pi: torch.tensor, the pi values at X_cand
+        """
+        return self.lfi(X_cand, log=log)
+    

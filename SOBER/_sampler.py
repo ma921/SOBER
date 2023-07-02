@@ -329,3 +329,49 @@ class EmpiricalSampler(RecombinationSampler):
         idx_nys = self.deweighted_resampling(weights, n_nys)
         X_nys = X_cand[idx_nys]
         return X_cand, X_nys, weights
+
+class MixtureSampler:
+    def __init__(self, prior, sober, ratio_wkde=0.5):
+        """
+        Sampling from posterior.
+        
+        Args:
+        - prior: class, the class of prior distribution
+        - sober: class, the class of the learnt Sober
+        - ratio_wkde: float, the proportion to sample from pi
+        """
+        self.prior = prior
+        self.sober = sober
+        self.bounds = prior.bounds
+        self.ratio_wkde = ratio_wkde
+    
+    def sample(self, n_samples):
+        """
+        Sampling from the mixture of prior and pi
+        
+        Args:
+           - n_samples: int, number of samples to draw
+           
+        Returns:
+            - samples: torch.tensor, the samples from mixture density
+        """
+        n_wkde = int(self.ratio_wkde * n_samples)
+        n_prior = int((1-self.ratio_wkde) * n_samples)
+        
+        samples_wkde = self.sober.prior.sample(n_wkde)
+        samples_prior = self.prior.sample(n_prior)
+        samples = torch.vstack([samples_wkde, samples_prior])
+        return samples
+    
+    def pdf(self, X):
+        """
+        Probability density function of the mixture distribution
+        
+        Args:
+           - n_samples: int, number of samples to draw
+           
+        Returns:
+            - samples: torch.tensor, the samples from mixture density
+        """
+        pdfs = self.sober.prior.pdf(X)/2 + self.prior.pdf(X)/2
+        return pdfs

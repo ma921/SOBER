@@ -28,8 +28,8 @@ class ScaleMmltGP:
          _________________________ _______________________________________ __________________
         |          f space        |                g space                |     h space      |
         |_________________________|_______________________________________|__________________|
-        |             f           |               g / exp(β)              |  h = log(g + 1)  |
-        |        f = f exp(β)     |             g = exp(h) - 1            |        h         |
+        |             f           |               f / exp(β)              |  h = log(g + 1)  |
+        |        f = g exp(β)     |             g = exp(h) - 1            |        h         |
         |_________________________|_______________________________________|__________________|
         |      f = GP(μ_f, σ_f)   |           g = GP(μ_g, σ_g)            | h = GP(μ_h, σ_h) |
         |     μ_f = μ_g(x)exp(β)  |        μ_g = exp(μ_h + 1/2 σ_h) - 1   |        μ_h       |
@@ -66,10 +66,11 @@ class ScaleMmltGP:
         self.rng = rng
         self.train_lik = train_lik
         self.optimiser = optimiser
+        self.is_bq = True
 
         self.jitter = 0  # 1e-6
         self.Y_log = copy.deepcopy(Yobs)
-        self.utils = Utils(device)
+        self.utils = Utils(self.device)
 
         self.model = update_gp(
             Xobs,
