@@ -88,22 +88,27 @@ class CanonicalECMTwoRCs:
         R = torch.exp(-torch.exp(sigma))
         self.reZ = self.real_part() + Normal(0, 1).sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
         self.imZ = self.imarginary_part() + Normal(0, 1).sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
-        self.Rt_syn = copy.deepcopy(self.Rt)
-        self.LL = self.loglikelihood(sigma)
-
-    def loglikelihood(self, sigma):
-        """
-        Args:
-            - sigma: torch.tensor, experimental noise variance
-        Returns:
-            - LL: torch.tensor, log-likelihood
-        """
-        R = torch.exp(-torch.exp(sigma))
+        #self.Rt_syn = copy.deepcopy(self.Rt)
+        #self.LL = self.loglikelihood(sigma)
+        
+    def error(self, _theta):
+        theta = torch.squeeze(_theta).detach()
+        self.set_parameters(theta[0], theta[1], theta[2], theta[3], theta[4])
         err_reZ = self.reZ - self.real_part()
         err_imZ = self.imZ - self.imarginary_part()
         err = (err_reZ @ err_reZ + err_imZ @ err_imZ)
-        LL = -torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
+        return err
+
+    def loglikelihood(self, err):
+        N = 2 * len(self.omega)
+        R = err / N
+        LL = - 0.5 * torch.log(2 * torch.pi * R) * N - 0.5 * err / R
         return LL
+    
+    def discrepancy(self, err):
+        N = 2 * len(self.omega)
+        R = err / N
+        return - R.log()
 
     def convert_circuit_elements(self):
         """
@@ -139,18 +144,14 @@ class CanonicalECMTwoRCs:
     def __call__(self, _theta):
         """
         Args:
-            - _theta: torch.tensor, circuit parameters, _theta = [rt, r1_, t1, r2_, t2, sigma]
+            - _theta: torch.tensor, circuit parameters, _theta = [rt, r1_, t1, r2_, t2]
         Returns:
             - LL: torch.tensor, log-likelihood
         """
-        theta = torch.squeeze(_theta).detach()
-        R = torch.exp(-torch.exp(theta[-1]))
-        self.set_parameters(theta[0], theta[1], theta[2], theta[3], theta[4])
-        err_reZ = self.reZ - self.real_part()
-        err_imZ = self.imZ - self.imarginary_part()
-        err = (err_reZ @ err_reZ + err_imZ @ err_imZ)
-        LL = -torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
-        return LL
+        err = self.error(_theta)
+        d = self.discrepancy(err)
+        LL = self.loglikelihood(err)
+        return d, LL
 
 
 class CanonicalECMOneRCs:
@@ -234,7 +235,7 @@ class CanonicalECMOneRCs:
         err_reZ = self.reZ - self.real_part()
         err_imZ = self.imZ - self.imarginary_part()
         err = err_reZ @ err_reZ + err_imZ @ err_imZ
-        LL = -torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
+        LL = - 0.5 * torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
         return LL
 
 
@@ -333,7 +334,7 @@ class CanonicalECMThreeRCs:
         err_reZ = self.reZ - self.real_part()
         err_imZ = self.imZ - self.imarginary_part()
         err = err_reZ @ err_reZ + err_imZ @ err_imZ
-        LL = -torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
+        LL = - 0.5 * torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
         return LL
     
 class CanonicalECMFiveRCs:
@@ -445,7 +446,7 @@ class CanonicalECMFiveRCs:
         err_reZ = self.reZ - self.real_part()
         err_imZ = self.imZ - self.imarginary_part()
         err = err_reZ @ err_reZ + err_imZ @ err_imZ
-        LL = -torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
+        LL = - 0.5 * torch.log(2 * torch.pi * R) * len(self.omega) - 0.5 * err / R
         return LL
 
 def setup_ecm_two():
@@ -458,29 +459,22 @@ def setup_ecm_two():
     """
     # dataset conditions
     n_data = 100  # number of data points
-    f = torch.logspace(1,10,n_data)  # frequency [Hz]
+    f = torch.logspace(1, 10, n_data)  # frequency [Hz]
     omega = 2 * torch.pi * f  # angular frequency [rad/s]
-    params_true = torch.tensor([2,-0.5,-1,0,0.5, 1.0])  # true parameter set
+    params_true = torch.tensor([2, -0.5, -1,0, 0.5])  # true parameter set
 
     # ECM parameters
-    rt, r1, t1, r2, t2, sigma = params_true  # decompose the parameters
+    rt, r1, t1, r2, t2 = params_true  # decompose the parameters
+    sigma = 1.0 # true noise variance
     TwoRCsModel = CanonicalECMTwoRCs(rt, r1, t1, r2, t2, sigma, omega)  # set ECM
-
-    def discrepancy(_theta):
-        theta = torch.squeeze(_theta).detach()
-        TwoRCsModel.set_parameters(theta[0], theta[1], theta[2], theta[3], theta[4])
-        err_reZ = TwoRCsModel.reZ - TwoRCsModel.real_part()
-        err_imZ = TwoRCsModel.imZ - TwoRCsModel.imarginary_part()
-        return -1*(err_reZ @ err_reZ + err_imZ @ err_imZ).log()
-
+    
     mu_pi = params_true * 0.9  # mean vector of Gaussian prior
     cov_pi = 0.5 * torch.diag(torch.ones(len(mu_pi))).float()  # covariance matrix of Gaussian prior
     bounds = torch.tensor([
-        [1,-2,-2,-2, -2, 0],
-        [3, 2, 2, 2,  2, 2],
+        [1,-2,-2,-2, -2],
+        [3, 2, 2, 2,  2],
     ]).float()
     prior = TruncatedGaussian(mu_pi, cov_pi, bounds)
-
-    LogLikelihoodFunction = vmap(TwoRCsModel)  # True log-likelihood function
-    DiscrepancyFunction = vmap(discrepancy)  # True discrepancy function
-    return prior, LogLikelihoodFunction, DiscrepancyFunction
+    
+    TestFunction = vmap(TwoRCsModel) # True discrepancy function
+    return prior, TestFunction
