@@ -33,7 +33,7 @@ See `tutorials`.
 - 03 Customise acquisition function
 - 04 Fast fully Bayesian Gaussian process modelling
 - 05 Fast Bayesian inference for simulation-based inference
-- 06 Deep learning based sampler for drug discovery
+- 06 Tips for drug discovery
 
 ## Examples
 See `examples` for reproducing the results in the paper.
