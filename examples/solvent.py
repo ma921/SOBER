@@ -56,10 +56,13 @@ if __name__ == "__main__":
     torch.manual_seed(seed)  # random seed
     
     # set up the experiments
-    prior = setup_solvent()
+    SOLVENT_DIR_NAME = "../experiments/dataset/"
+    data_filename = "QM9_dipole.csv"
+    data_path = os.path.join(SOLVENT_DIR_NAME, data_filename)
+    prior = setup_solvent(data_path)
     
     batch_size = 200   # number of batch samples
-    n_rec = 200000     # number of candidates sampled from pi
+    n_rec = 20000      # number of candidates sampled from pi
     n_nys = 500        # number of samples for Nyström approximation
     n_init = 100       # number of initial samples
     n_iterations = 15  # number of iterations (batches)
@@ -67,7 +70,7 @@ if __name__ == "__main__":
     # initial sampling
     Xall, Yall = prior.sample(n_init)
     model = set_tanimoto_gp_model(Xall, Yall)
-    sober = Sober(prior, model)
+    sober = Sober(prior, model, kernel_type="weighted_predictive_covariance")
 
     results = []
     obj = None
@@ -75,17 +78,17 @@ if __name__ == "__main__":
         start = time.monotonic()
         model = fit_model(Xall, Yall)
         sober.update_model(model)
-        X = sober.next_batch(
+        indices, X = sober.next_batch(
             n_rec,
             n_nys,
             batch_size,
-            calc_obj=None,  # Whether using an acquisition function
-            verbose=False,   # Whether showing the detailed progress
+            calc_obj=None,       # Whether using an acquisition function
+            verbose=False,       # Whether showing the detailed progress
         )
         end = time.monotonic()
         interval = end - start
 
-        Y = prior.query(X)
+        Y = prior.query(indices)
         Xall = torch.cat((Xall, X), dim=0)
         Yall = torch.cat((Yall, Y), dim=0)
 
