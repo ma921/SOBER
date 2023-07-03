@@ -52,8 +52,7 @@ class Utils:
            - flag: bool, flag to judge whether or not the given matrix is positive semi-definite
         """
         return bool((mat == mat.T).all() and (torch.linalg.eig(mat)[0].real >= 0).all())
-        #return bool((mat == mat.T).all() and (torch.linalg.eig(mat)[0][:, 0] >= 0).all())
-    
+        
     def make_cov_psd(self, cov):
         """
         Args:

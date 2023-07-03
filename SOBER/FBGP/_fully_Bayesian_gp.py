@@ -8,6 +8,7 @@ from .._gp import ExactGPModel
 from .._utils import Utils
 from .._kernel import Kernel
 from .._rchq import recombination
+from .._weights import WeightsStabiliser
 
 class ManagingGPHyperparameters:
     def __init__(self, rng=100):
@@ -220,8 +221,12 @@ def quadrature_distillation(Hypersamples, LMLs, gp_kernel, n_nys=100, n_qd=50):
     
     # hyperposterior as weighted hyperprior samples
     n_rec = len(Hypersamples)
-    w_IS = (LMLs - LMLs.max()).exp()
-    w_IS /= w_IS.sum()
+    weights = (LMLs - LMLs.max()).exp()
+    
+    W = WeightsStabiliser()
+    weights = W.cleansing_weights(weights)
+    idx_nys = W.deweighted_resampling(weights, n_nys)
+    Hyper_nys = Hypersamples[idx_nys]
     
     # modelling hyper-GP
     VBQ = ScaleVanillaGP(Hypersamples, LMLs, gp_kernel, device)
@@ -230,11 +235,11 @@ def quadrature_distillation(Hypersamples, LMLs, gp_kernel, n_nys=100, n_qd=50):
     # recombination
     idx, w_qd = recombination(
         Hypersamples,
-        Hypersamples[:n_nys],
+        Hyper_nys,
         n_qd,
         kernel,
         device,
-        init_weights=w_IS,
+        init_weights=weights,
     )
     Theta_qd = Hypersamples[idx]
     return w_qd, Theta_qd

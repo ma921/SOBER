@@ -29,6 +29,8 @@ class WeightsStabiliser:
         weights[weights.isnan()] = self.eps
         if not weights.sum() == 0:
             weights /= weights.sum()
+        else:
+            weights = torch.ones_like(weights)/len(weights)
         return weights
     
     def check_weights(self, weights):
@@ -61,10 +63,13 @@ class WeightsStabiliser:
         - idx_nys: torch.tensor, the indices where the resamples locate.
         """
         #assert len(weights.unique()) > n_nys
-        if (weights > 0).sum() > n_nys:
+        n_positive_weights = (weights > 0).sum()
+        if n_positive_weights > n_nys:
             idx_nys = torch.multinomial(weights, n_nys)
         else:
-            idx_nys = (weights > 0)
+            idx_positive = torch.arange(len(weights))[weights > 0]
+            idx_rand = torch.randperm(len(weights))[:int(n_nys - n_positive_weights)]
+            idx_nys = torch.cat([idx_positive, idx_rand])
             warnings.warn("Non-zero weights are fewer than n_Nys: "+str(idx_nys.sum()))
         return idx_nys
     

@@ -225,7 +225,7 @@ class EmpiricalSampler(RecombinationSampler):
         
         if n_accepted == 0:
             if verbose:
-                print("Weighted sampling unsuccessful. Uniform random sampling instad...")
+                print("Weighted sampling unsuccessful. Uniform random sampling instead...")
             self.flag = True
             if self.check_categorical():
                 X_cand, X_indices, weights = self.categorical_sampling(n_rec)
@@ -303,7 +303,33 @@ class EmpiricalSampler(RecombinationSampler):
         self.thresh = copy.deepcopy(self.thresh_initial)
         return X_cand, X_nys, weights
     
-    def sampling_datasets(self, n_rec, n_nys):        
+    def adaptive_pruning(self, weights, n_rec, n_nys, thresh=1e-3):
+        """
+        Pruning the candindates from dataset with weights
+        
+        Args:
+        - weights: torch.tensor, weights
+        - n_rec: int, the number of samples for recombination
+        - n_nys: int, the number of samples for Nyström approximation
+        
+        Return:
+        - idx_sampled: torch.tensor, indices where X_cand is sampled
+        """
+        indices = weights.argsort(descending=True)
+        try:
+            n_accepted = torch.where(weights[indices] > thresh)[0][-1] + 1
+            if n_accepted >= n_rec:
+                n_pruned = n_rec
+            elif n_nys >= n_accepted:
+                n_pruned = n_nys
+            else:
+                n_pruned = n_accepted
+        except:
+            n_pruned = n_nys
+        idx_sampled = indices[:n_pruned]
+        return idx_sampled
+    
+    def sampling_datasets(self, n_rec, n_nys):
         """
         Sampling from dataset with weights
         
@@ -315,20 +341,26 @@ class EmpiricalSampler(RecombinationSampler):
         - X_cand: torch.tensor, samples for recombination
         - X_nys: torch.tensor, samples for Nyström approximation
         - weights: torch.tensor, weights
+        - idx_sampled: (optional) torch.tensor, indices where X_cand is sampled
         """
         assert n_rec > n_nys
     
-        if n_rec > self.prior.n_available:
-            X_cand = self.prior.available_candidates()
-        else:
-            X_cand = self.prior.sample_feature(n_rec)
-        
+        X_cand = self.prior.available_candidates()
         weights = self.pi(X_cand)
-        weights = self.cleansing_weights(weights)
         
+        if self.dataset_pruning:
+            idx_sampled = self.adaptive_pruning(weights, n_rec, n_nys)
+            X_cand = X_cand[idx_sampled]
+            weights = weights[idx_sampled]
+        
+        weights = self.cleansing_weights(weights)
         idx_nys = self.deweighted_resampling(weights, n_nys)
         X_nys = X_cand[idx_nys]
-        return X_cand, X_nys, weights
+        
+        if self.dataset_pruning:
+            return idx_sampled, X_cand, X_nys, weights
+        else:
+            return X_cand, X_nys, weights
 
 class MixtureSampler:
     def __init__(self, prior, sober, ratio_wkde=0.5):

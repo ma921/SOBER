@@ -14,6 +14,8 @@ class Sober(EmpiricalSampler):
         eps=0,
         thresh=5,
         sampler_type="lfi",
+        kernel_type="predictive_covariance",
+        dataset_pruning=True,
     ):
         """
         Batch Bayesian optimisation as batch Bayesian quadrature
@@ -25,8 +27,11 @@ class Sober(EmpiricalSampler):
                For double precision; eps = torch.finfo().min
         - thresh: int, the number of non-zero weights which regrads anomalies.
         - sampler_type: string, Select from "lfi" or "ts". LFI = likelihood-free inference, TS = Thompson sampling
+        - dataset_pruning: bool, perform pruning for dataset prior if true, otherwise not.
         """
         self.sampler_type = sampler_type
+        self.kernel_type = kernel_type
+        self.dataset_pruning = dataset_pruning
         self.check_model_type(model)
         pi, kernel = self.initialisation(model)
         self.n_batches_until_reset = 3
@@ -62,7 +67,7 @@ class Sober(EmpiricalSampler):
             kernel = model.gspace_kernel
         else:
             pi = PI(model, label=self.sampler_type)
-            kernel = Kernel(model)
+            kernel = Kernel(model, mode=self.kernel_type)
         return pi, kernel
     
     def update_model(self, model):
@@ -148,7 +153,11 @@ class Sober(EmpiricalSampler):
                 self.initialise_prior()
             X_cand, X_nys, weights = self.sampling_candidates(n_rec, n_nys, verbose=verbose)
         else:
-            X_cand, X_nys, weights = self.sampling_datasets(n_rec, n_nys)
+            empirical_measure = self.sampling_datasets(n_rec, n_nys)
+            if self.dataset_pruning:
+                idx_sampled, X_cand, X_nys, weights = empirical_measure
+            else:
+                X_cand, X_nys, weights = empirical_measure
             
         if verbose:
             intermidiate = time.monotonic()
@@ -158,6 +167,7 @@ class Sober(EmpiricalSampler):
             print(f" # of Nyström samples: {len(X_nys):.3e}")
             print(f" # of nonzero weights: {(weights > 0).sum():.3e}")
             print("--- Start kernel recombination...")
+        
         idx_rchq, w_rchq = self.sampling_recombination(
             X_cand,
             X_nys,
@@ -172,5 +182,11 @@ class Sober(EmpiricalSampler):
             
         if return_weights:
             return w_rchq, X_batch
+        elif self.label == "dataset":
+            if self.dataset_pruning:
+                idx_rchq = idx_sampled[idx_rchq]
+                return idx_rchq, X_batch
+            else:
+                return idx_rchq, X_batch
         else:
             return X_batch

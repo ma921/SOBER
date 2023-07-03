@@ -490,103 +490,7 @@ class MixedCategoricalPrior:
         pdf_disc = self.prior_disc.pdf(x_disc)
         return pdf_cont * pdf_disc
 
-class Featurise:
-    def __init__(self, features):
-        """
-        Make binary features as string input for dataset search
-        
-        Args:
-        - features: torch.tensor, the binary inputs
-        """
-        features_string = self.stringise(features)
-        self.df = pd.DataFrame(index=features_string)
-        
-    def feature2string(self, feature):
-        """
-        Transform binary features into string
-        
-        Args:
-        - features: torch.tensor, the binary inputs
-        
-        Return:
-        - string_feature: string, the string of inputs
-        """
-        words = [str(int(i)) for i in feature]
-        string_feature = ''.join(words)
-        return string_feature
-
-    def stringise(self, features):
-        """
-        Transform binary features into the numpy list of string
-        
-        Args:
-        - features: torch.tensor, the binary inputs
-        
-        Return:
-        - string_features: numpy.ndarray, the numpy list of string
-        """
-        return np.asarray([self.feature2string(feature.numpy()) for feature in features])
-
-    def string2feature(self, string):
-        """
-        Transform back the string into binary features
-        
-        Args:
-        - string: string, the string of inputs
-        
-        Return:
-        - features: torch.tensor, the binary inputs
-        """
-        return torch.tensor([int(n) for n in string])
-
-    def featurise(self, strings):
-        """
-        Transform back the string into binary features
-        
-        Args:
-        - strings: string, the string of inputs
-        
-        Return:
-        - features: torch.tensor, the binary inputs
-        """
-        return torch.vstack([self.string2feature(string) for string in strings])
-
-    def index2feature(self, indices):
-        """
-        Get binary features from the indices
-        
-        Args:
-        - indices: torch.tensor, the indices where to query the features
-        
-        Return:
-        - features: torch.tensor, the binary inputs
-        """
-        strings = self.df.index[indices]
-        return self.featurise(strings).float()
-    
-    def find_matching_row(self, X):
-        """
-        Find the indices of the dataset matching with the given binary features
-        
-        Args:
-        - X: torch.tensor, the binary inputs
-        
-        Return:
-        - indices: torch.tensor, the indices matching with the given binary features
-        """
-        strings = self.stringise(X)
-        indices = [self.df.index.get_loc(strings[i]) for i in range(len(strings))]
-        
-        detected = []
-        for i, idx in enumerate(indices):
-            if np.issubdtype(type(idx), int):
-                detected.append(idx)
-            else:
-                detected.append(0)
-                print("misspecified! The index is "+str(i))
-        return torch.tensor(detected)
-    
-class DatasetPrior(Featurise):
+class DatasetPrior:
     def __init__(
         self,
         features,
@@ -599,8 +503,8 @@ class DatasetPrior(Featurise):
         - features: torch.tensor, the binary inputs
         - true_targets: torch.tensor, the objective to maximize
         """
-        super().__init__(features)
         self.available_index = torch.arange(len(features))
+        self.features = features.float()
         self.true_targets = true_targets.float()
         self.reset_indices(self.available_index)
         self.type = "dataset"
@@ -613,7 +517,7 @@ class DatasetPrior(Featurise):
         - available_index: torch.tensor, the available indices that the queried indices are removed.
         """
         self.n_available = available_index.shape[0]
-        self.df = self.df.iloc[available_index, :]
+        self.features = self.features[available_index]
         self.true_targets = self.true_targets[available_index]
         self.available_index = torch.arange(self.n_available)
         
@@ -642,9 +546,9 @@ class DatasetPrior(Featurise):
         available_index = self.set_substract(self.available_index, idx_sampled)
         self.reset_indices(available_index)
     
-    def query(self, X_cand):
+    def query(self, idx_cand):
         """
-        Query Y at given X.
+        Query Y at given indices.
         Then, update the internal dataset to delete the drawn samples.
         
         Args:
@@ -653,9 +557,8 @@ class DatasetPrior(Featurise):
         Return:
         - Y: torch.tensor, the true values
         """
-        idx_sampled = self.find_matching_row(X_cand)
-        Y = self.true_targets[idx_sampled]
-        self.remove_sampled_index(idx_sampled)
+        Y = self.true_targets[idx_cand]
+        self.remove_sampled_index(idx_cand)
         return Y
     
     def sample(self, n_sample):
@@ -671,7 +574,7 @@ class DatasetPrior(Featurise):
         - Y: torch.tensor, the true values.
         """
         idx_sampled = torch.randperm(self.n_available)[:n_sample]
-        X = self.index2feature(idx_sampled)
+        X = self.features[idx_sampled]
         Y = self.true_targets[idx_sampled]
         self.remove_sampled_index(idx_sampled)
         return X, Y
@@ -687,8 +590,8 @@ class DatasetPrior(Featurise):
         - X: torch.tensor, the features.
         """
         idx_sampled = torch.randperm(self.n_available)[:n_sample]
-        X = self.index2feature(idx_sampled)
-        return X
+        X = self.features[idx_sampled]
+        return idx_sampled, X
     
     def available_candidates(self):
         """
@@ -697,5 +600,4 @@ class DatasetPrior(Featurise):
         Return:
         - X: torch.tensor, the features.
         """
-        return self.index2feature(self.available_index)
-
+        return self.features

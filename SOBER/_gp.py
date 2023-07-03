@@ -224,13 +224,17 @@ def predict(test_x, model):
     model.eval()
     model.likelihood.eval()
 
-    try:
-        with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            pred = model.likelihood(model(test_x))
-    except:
-        warnings.warn("Cholesky failed. Adding more jitter...")
-        with torch.no_grad(): #, gpytorch.settings.cholesky_jitter(float=1e-2):
-            pred = model.likelihood(model(test_x))
+    with torch.no_grad():
+        try:
+            with gpytorch.settings.fast_pred_var():
+                pred = model.likelihood(model(test_x))
+        except:
+            try:
+                pred = model.likelihood(model(test_x))
+            except:
+                warnings.warn("Cholesky failed. Adding more jitter...")
+                with gpytorch.settings.cholesky_jitter(float_value=1e-2):
+                    pred = model.likelihood(model(test_x))
     return pred.mean, pred.variance
 
 def predict_mean(test_x, model):
@@ -245,17 +249,8 @@ def predict_mean(test_x, model):
         - pred.mean; torch.tensor, the predictive mean
         - pred.variance; torch.tensor, the predictive variance
     """
-    model.eval()
-    model.likelihood.eval()
-
-    try:
-        with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            pred = model.likelihood(model(test_x))
-    except:
-        warnings.warn("Cholesky failed. Adding more jitter...")
-        with torch.no_grad(), gpytorch.settings.cholesky_jitter(float=1e-2):
-            pred = model.likelihood(model(test_x))
-    return pred.mean
+    pred_mean, _ = predict(test_x, model)
+    return pred_mean
 
 def get_cov_cache(model):
     """
