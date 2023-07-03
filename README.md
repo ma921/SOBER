@@ -1,8 +1,6 @@
 # SOBER
 
-This repository contains the python code that was presented for the following paper.
-
-[1] Adachi, M., Hayakawa, S., Hamid, S., Jørgensen, M., Oberhauser, H., and Osborne, M. A. SOBER: Highly Parallel Bayesian Optimization and Bayesian Quadrature over Discrete and Mixed Spaces. arXiv 2023 <br>
+Fast Bayesian optimization, quadrature, inference over arbitrary domain with GPU parallel acceleration based on GPytorch and BoTorch.
 [arXiv](https://arxiv.org/abs/2301.11832),
 
 ![Animate](./docs/animated.gif)
