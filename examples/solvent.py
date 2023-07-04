@@ -14,8 +14,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from experiments._solvent import setup_solvent
 from SOBER._sober import Sober
 from SOBER._drug_modelling import TanimotoGP
+from SOBER._utils import TensorManager
 warnings.filterwarnings('ignore')
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+tm = TensorManager()
 
 
 def set_tanimoto_gp_model(X, Y):
@@ -32,7 +33,10 @@ def set_tanimoto_gp_model(X, Y):
     train_Y = (Y - Y.mean()) / Y.std()
     train_Y = train_Y.view(-1).unsqueeze(1)
     model = TanimotoGP(X, train_Y)
-    return model
+    if tm.is_cuda():
+        return model.cuda()
+    else:
+        return model
 
 def fit_model(X, Y):
     """

@@ -13,9 +13,9 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from experiments._pest import setup_pest
 from SOBER._sober import Sober
+from SOBER._utils import TensorManager
 warnings.filterwarnings('ignore')
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
+tm = TensorManager()
 
 def set_rbf_model(X, Y):
     """
@@ -36,7 +36,10 @@ def set_rbf_model(X, Y):
     train_Y = train_Y.view(-1).unsqueeze(1)
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
     model = SingleTaskGP(X, train_Y, likelihood=likelihood, covar_module=covar_module)
-    return model
+    if tm.is_cuda():
+        return model.cuda()
+    else:
+        return model
 
 def fit_model(X, Y):
     """
