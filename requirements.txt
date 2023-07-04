@@ -1,0 +1,8 @@
+botorch==0.8.4
+gpytorch==1.10
+joblib==1.1.0
+matplotlib==3.5.2
+numpy==1.21.6
+pandas==1.4.4
+scipy==1.9.1
+torch==1.13.0
