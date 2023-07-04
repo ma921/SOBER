@@ -4,13 +4,13 @@ import warnings
 from ._prior_update import update_mixed_prior, update_binary_prior, update_categorical_prior, update_continuous_prior
 from ._weights import WeightsStabiliser
 from ._rchq import recombination
+from ._utils import TensorManager
 
 
-class RecombinationSampler(WeightsStabiliser):
+class RecombinationSampler(WeightsStabiliser, TensorManager):
     def __init__(
         self,
         kernel,
-        eps=0,
         thresh=5,
     ):
         """
@@ -18,13 +18,10 @@ class RecombinationSampler(WeightsStabiliser):
         
         Args:
         - kernel: class, the class of kernel
-        - eps: float, the machine epsilon (the smallest number of floating point).
-               For double precision; eps = torch.finfo().min
-        - thresh: int, the number of non-zero weights which regrads anomalies.
         """
-        super().__init__(eps=eps, thresh=thresh)  # WeightsStabiliser class initialisation
+        WeightsStabiliser.__init__(self, thresh=thresh)  # WeightsStabiliser class initialisation
+        TensorManager.__init__(self) # TensorManager class initialisation
         self.kernel = kernel
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         
     def sampling_recombination(
         self,
@@ -54,6 +51,7 @@ class RecombinationSampler(WeightsStabiliser):
             batch_size,
             self.kernel,
             self.device,
+            self.dtype,
             init_weights=weights,
             calc_obj=calc_obj,
         )
@@ -65,7 +63,6 @@ class EmpiricalSampler(RecombinationSampler):
         prior,
         pi,
         kernel,
-        eps=0,
         thresh=5,
         label="mixedbinary", 
     ):
@@ -76,12 +73,9 @@ class EmpiricalSampler(RecombinationSampler):
         - prior: class, the class of prior distribution
         - pi: class, the class of pi
         - kernel: class, the class of kernel
-        - eps: float, the machine epsilon (the smallest number of floating point).
-               For double precision; eps = torch.finfo().min
-        - thresh: int, the number of non-zero weights which regrads anomalies.
         - label: string, prior type. Select from "continuous", "binary", "categorical", "mixedbinary", "mixedcategorical".
         """
-        super().__init__(kernel, eps=eps, thresh=thresh)  # RecombinationSampler class initialisation
+        super().__init__(kernel, thresh=thresh)  # RecombinationSampler class initialisation
         self.prior_initial = copy.deepcopy(prior)
         self.thresh_initial = copy.deepcopy(thresh)
         self.prior = prior

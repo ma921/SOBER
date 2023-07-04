@@ -1,8 +1,9 @@
 import torch
 from .._rchq import recombination
 from .._sampler import MixtureSampler
+from .._utils import TensorManager
 
-class BASQ:
+class BASQ(TensorManager):
     def __init__(
         self, 
         prior, 
@@ -20,9 +21,9 @@ class BASQ:
            - sober: Sober class, SOBER model
            - ratio_wkde: float, the proportion to sample from pi
         """
+        super().__init__()
         self.prior = prior
         self.update_model(model, sober, ratio_wkde=ratio_wkde)
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     def update_model(self, model, sober, ratio_wkde=0.5):
         """
@@ -52,7 +53,7 @@ class BASQ:
             - AVLML: float, Variance log marginal likelihood
         """
         X_cand = self.prior.sample(n_quad)
-        w_IS = torch.ones(n_quad) / n_quad
+        w_IS = self.ones(n_quad) / n_quad
         X_nys = X_cand[:n_nys_quad]
         
         idx, w = recombination(
@@ -61,6 +62,7 @@ class BASQ:
             n_res_quad,
             self.kernel,
             self.device,
+            self.dtype,
             init_weights=w_IS,
         )
         x = X_cand[idx]

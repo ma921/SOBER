@@ -11,7 +11,6 @@ class Sober(EmpiricalSampler):
         self,
         prior,
         model,
-        eps=0,
         thresh=5,
         sampler_type="lfi",
         kernel_type="predictive_covariance",
@@ -35,7 +34,7 @@ class Sober(EmpiricalSampler):
         self.check_model_type(model)
         pi, kernel = self.initialisation(model)
         self.n_batches_until_reset = 3
-        super().__init__(prior, pi, kernel, eps=eps, thresh=thresh, label=prior.type)  # EmpiricalSampler class initialisation
+        super().__init__(prior, pi, kernel, label=prior.type)  # EmpiricalSampler class initialisation
     
     def check_model_type(self, model):
         # check fully Bayesian GP model or not
@@ -78,7 +77,7 @@ class Sober(EmpiricalSampler):
         - model: gpytorch.models, function of GP model.
         """
         pi, kernel = self.initialisation(model)
-        super().__init__(self.prior, pi, kernel, eps=self.eps, thresh=self.thresh, label=self.prior.type)
+        super().__init__(self.prior, pi, kernel, thresh=self.thresh, label=self.prior.type)
     
     def should_reset_prior(self, batch_size, recycle_prior):
         """

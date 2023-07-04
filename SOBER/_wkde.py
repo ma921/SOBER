@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 from torch.distributions.multivariate_normal import MultivariateNormal
 from ._utils import Utils
 from ._weights import WeightsStabiliser
+from ._prior import BasePrior
 from .mvnorm import multivariate_normal_cdf as Phi
 
-class WeightedKernelDensityEstimation(WeightsStabiliser):
+class WeightedKernelDensityEstimation(WeightsStabiliser, Utils, BasePrior):
     def __init__(
         self,
         X,
@@ -31,16 +32,15 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         - compute_cdf: bool, compute normalised PDF of truncated multivariate normal distributions if true, otherwise not.
                              The default is false as it produces significant overhead.
         """
-        super().__init__(eps=0, thresh=n_kde) # WeightsStabiliser class initialisation
+        WeightsStabiliser.__init__(self, eps=0, thresh=n_kde) # inherit WeightsStabiliser class
+        Utils.__init__(self) # inherit Utils class
+        BasePrior.__init__(self) # inherit BasePrior class
         self.n_dims = n_dims
         self.bounds = bounds
         self.n_kde = min([n_kde, len(X)])
         self.bw_method = bw_method
         self.compute_cdf = compute_cdf
         self.type = "continuous"
-
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.utils = Utils(device)
         self.initialisation(X, W)
     
     def initialisation(self, X, Y):
@@ -54,7 +54,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         if self.check_weights(Y):
             idx_accept = self.deweighted_resampling(Y, self.n_kde)
         else:
-            idx_accept = torch.arange(Y.size(0))[self.cleansing_weights(Y) > 0]
+            idx_accept = self.arange(Y.size(0))[self.cleansing_weights(Y) > 0]
             self.n_kde = len(idx_accept)
             if self.n_kde < 1:
                 raise ValueError("Invalid weights")
@@ -70,7 +70,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
     def _compute_constant(self):
         p_lb = Phi(self.bounds[0], loc=self.Xobs, covariance_matrix=self.covariance)
         p_ub = Phi(self.bounds[1], loc=self.Xobs, covariance_matrix=self.covariance)
-        self.constant = (p_ub - p_lb).float()
+        self.constant = self.standardise_tensor(p_ub - p_lb)
 
     def set_bandwidth(self):
         """
@@ -93,7 +93,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         self._data_covariance = (_residual.T * self.weights.unsqueeze(0)) @ _residual
         # Correct for bias(http://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_covariance)
         self._data_covariance /= 1 - self.weights.pow(2).sum()
-        self.covariance = self.utils.make_cov_psd(self._data_covariance * self.bw.pow(2))
+        self.covariance = self.make_cov_psd(self._data_covariance * self.bw.pow(2))
 
     def pdf(self, X):
         """
@@ -112,8 +112,8 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
             self.Xobs.repeat(n_X, 1, 1) - X.unsqueeze(1)
         ).reshape(int(self.n_kde*n_X), self.n_dims)
 
-        Npdfs_AA = self.utils.safe_mvn_prob(
-            torch.zeros(self.n_dims),
+        Npdfs_AA = self.safe_mvn_prob(
+            self.zeros(self.n_dims),
             self.covariance,
             x_AA,
         ).reshape(n_X, self.n_kde)
@@ -122,8 +122,8 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
             # Thresholding out-of-bound samples
             indices_min = (X < self.bounds[0]).any(axis=1)
             indices_max = (X > self.bounds[1]).any(axis=1)
-            Npdfs_AA[indices_min] = torch.zeros(self.n_kde)
-            Npdfs_AA[indices_max] = torch.zeros(self.n_kde)
+            Npdfs_AA[indices_min] = self.zeros(self.n_kde)
+            Npdfs_AA[indices_max] = self.zeros(self.n_kde)
             
             if self.compute_cdf:
                 Ypreds = (self.weights / self.constant) @ Npdfs_AA.T
@@ -158,9 +158,9 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         Return:
         - samples: torch.tensor, the accepted samples from truncated Gaussian prior
         """
-        samples = torch.tensor([])
+        samples = self.null()
         for i in range(n_repeat):
-            cov = self.utils.make_cov_psd(cov)
+            cov = self.make_cov_psd(cov)
             samples_raw = MultivariateNormal(
                 mean,
                 cov,
@@ -192,12 +192,12 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         """
         if cnt == 0:
             warnings.warn("invalid Gaussian in the kernel density estimation")
-            return torch.tensor([])
+            return self.null()
         elif (cov == 0).all():
             warnings.warn("invalid Gaussian in the kernel density estimation")
-            return torch.tensor([])
+            return self.null()
         else:
-            cov = self.utils.make_cov_psd(cov)
+            cov = self.make_cov_psd(cov)
             if self.bounds == None:
                 samples = MultivariateNormal(
                     mean,
@@ -234,7 +234,5 @@ class WeightedKernelDensityEstimation(WeightsStabiliser):
         if len(samples) > N_rec:
             indice = torch.multinomial(torch.ones(len(samples)), N_rec)
             samples = samples[indice]
-        elif len(samples) < N_rec:
-            breakpoint()
         return samples
     

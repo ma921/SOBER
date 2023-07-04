@@ -2,16 +2,20 @@ import torch
 import warnings
 
 class WeightsStabiliser:
-    def __init__(self, eps=0, thresh=5):
+    def __init__(
+        self,
+        eps=torch.finfo().eps,
+        thresh=5,
+    ):
         """
         A class of functions that stabilise the weight-related computations
         
         Args:
-        - eps: float, the machine epsilon (the smallest number of floating point).
-               For double precision; eps = torch.finfo().min
+        - eps_weights: float, the machine epsilon (the smallest number of floating point).
+                       Default: torch.finfo().eps
         - thresh: int, the number of non-zero weights which regrads anomalies.
         """
-        self.eps = eps
+        self.eps_weights = eps
         self.thresh = thresh
         
     def cleansing_weights(self, weights):
@@ -24,9 +28,9 @@ class WeightsStabiliser:
         Return:
         - weights: torch.tensor, the cleaned weights
         """
-        weights[weights < self.eps] = self.eps
-        weights[weights.isinf()] = self.eps
-        weights[weights.isnan()] = self.eps
+        weights[weights < self.eps_weights] = 0
+        weights[weights.isinf()] = self.eps_weights
+        weights[weights.isnan()] = self.eps_weights
         if not weights.sum() == 0:
             weights /= weights.sum()
         else:
@@ -62,7 +66,6 @@ class WeightsStabiliser:
         Return:
         - idx_nys: torch.tensor, the indices where the resamples locate.
         """
-        #assert len(weights.unique()) > n_nys
         n_positive_weights = (weights > 0).sum()
         if n_positive_weights > n_nys:
             idx_nys = torch.multinomial(weights, n_nys)

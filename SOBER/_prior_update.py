@@ -1,9 +1,36 @@
-from ._wkde import WeightedKernelDensityEstimation
-import torch.distributions as D
-import torch.optim as optim
 import torch
+import torch.optim as optim
+import torch.distributions as D
+from abc import ABC, abstractmethod
+from ._wkde import WeightedKernelDensityEstimation
+from ._utils import TensorManager
 
-class BernoulliMLE:
+
+class BaseMLE(ABC, TensorManager):
+    def __init__(self):
+        super().__init__()
+    
+    @abstractmethod
+    def objective(self, X):
+        r"""Optimization objective (weights)"""
+        pass
+    
+    @abstractmethod
+    def closure(self, X):
+        r"""Optimization loop"""
+        pass
+    
+    @abstractmethod
+    def run(self, X):
+        r"""Running optimization loop"""
+        pass
+    
+    @abstractmethod
+    def update_prior(self, X):
+        r"""Return the updated prior"""
+        pass
+
+class BernoulliMLE(BaseMLE):
     def __init__(self, weights, x_binary, n_max=5):
         """
         Update Bernoulli prior via maximum likelihood estimation (MLE).
@@ -13,6 +40,7 @@ class BernoulliMLE:
         - x_binary: torch.tensor, the observed input
         - n_max: int, the number of L-BFGS-B iteration
         """
+        super().__init__() # call TensorManager
         self.weights = weights.detach()
         self.x_binary = x_binary
         self.n_dims_binary = x_binary.size(1)
@@ -64,7 +92,7 @@ class BernoulliMLE:
         Return:
         result: torch.tensor, the optimised weights for the Bernoulli sampler
         """
-        self.x_lbfgs = torch.ones(self.n_dims_binary) * 0.5
+        self.x_lbfgs = self.ones(self.n_dims_binary) * 0.5
         self.x_lbfgs.requires_grad = True
         
         self.lbfgs = optim.LBFGS(
@@ -93,7 +121,7 @@ class BernoulliMLE:
         prior_binary.probs = weights_updated
         return prior_binary
     
-class CategoricalMLE:
+class CategoricalMLE(BaseMLE):
     def __init__(self, weights, x_disc, prior, n_max=5):
         """
         Update Bernoulli prior via maximum likelihood estimation (MLE).
@@ -104,6 +132,7 @@ class CategoricalMLE:
         - prior: class, the function of categorical prior
         - n_max: int, the number of L-BFGS-B iteration
         """
+        super().__init__() # call TensorManager
         self.weights = weights.detach()
         self.x_disc = x_disc.detach()
         self.n_dims_disc = x_disc.size(1)
@@ -157,7 +186,7 @@ class CategoricalMLE:
         Return:
         result: torch.tensor, the optimised weights for the Bernoulli sampler
         """
-        self.x_lbfgs = torch.ones(self.n_dims_disc * self.n_categories) * 0.5
+        self.x_lbfgs = self.ones(self.n_dims_disc * self.n_categories) * 0.5
         self.x_lbfgs.requires_grad = True
         
         self.lbfgs = optim.LBFGS([self.x_lbfgs],

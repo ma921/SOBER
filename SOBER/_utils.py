@@ -1,19 +1,87 @@
 import torch
 import warnings
+from torch.quasirandom import SobolEngine
 from torch.distributions.multivariate_normal import MultivariateNormal
+from ._settings import setting_parameters
 
 
-class Utils:
-    def __init__(self, device):
-        """
-        Args:
-           - device: torch.device, cpu or cuda
-        """
+def device_manager(device=None):
+    if device == None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    return device
+
+def dtype_manager(dtype=None):
+    if dtype == None:
+        dtype = torch.float
+    return dtype
+
+class TensorManager:
+    def __init__(self, device=None, dtype=None):
+        _device, _dtype = setting_parameters()
+        if dtype == None:
+            dtype = _dtype
+        if device == None:
+            device = _device
+        
+        self.device = device_manager(device=device)
+        self.dtype = dtype_manager(dtype=dtype)
+        
+    def standardise_tensor(self, tensor):
+        return tensor.to(self.device, self.dtype)
+    
+    def standardise_device(self, tensor):
+        return tensor.to(self.device)
+    
+    def ones(self, n_samples, n_dims=None):
+        if n_dims == None:
+            return self.standardise_tensor(torch.ones(n_samples))
+        else:
+            return self.standardise_tensor(torch.ones(n_samples, n_dims))
+    
+    def zeros(self, n_samples, n_dims=None):
+        if n_dims == None:
+            return self.standardise_tensor(torch.zeros(n_samples))
+        else:
+            return self.standardise_tensor(torch.zeros(n_samples, n_dims))
+    
+    def rand(self, n_dims, n_samples, qmc=True):
+        if qmc:
+            random_samples = SobolEngine(n_dims, scramble=True).draw(n_samples)
+        else:
+            random_samples = torch.rand(n_samples, n_dims)
+        return self.standardise_tensor(random_samples)
+    
+    def arange(self, length):
+        return self.standardise_device(torch.arange(length))
+    
+    def null(self):
+        return self.standardise_device(torch.tensor([]))
+    
+    def tensor(self, x):
+        return self.standardise_tensor(torch.tensor(x))
+    
+    def randperm(self, length):
+        return self.standardise_device(torch.randperm(length))
+    
+    def multinomial(self, weights, n):
+        return self.standardise_device(torch.multinomial(weights, n))
+    
+    def numpy(self, x):
+        return x.detach().cpu().numpy()
+    
+    def is_cuda(self):
+        if self.device == torch.device('cuda'):
+            return True
+        else:
+            return False
+
+class SafeTensorOperator(TensorManager):
+    def __init__(self):
+        super().__init__()
         self.eps = -torch.sqrt(torch.tensor(torch.finfo().max)).item()
         self.gpu_lim = int(5e5)
         self.max_iter = 10
-        self.device = device
-
+        
     def remove_anomalies(self, y):
         """
         Args:
@@ -70,7 +138,7 @@ class Utils:
             if not self.is_psd(cov):
                 n_dim = cov.size(0)
                 r_increment = 2
-                jitter = torch.ones(n_dim).to(self.device) * 1e-5
+                jitter = self.ones(n_dim) * 1e-5
                 n_iter = 0
                 while not self.is_psd(cov):
                     cov[range(n_dim), range(n_dim)] += jitter
@@ -117,3 +185,9 @@ class Utils:
         else:
             Npdfs = mvn.log_prob(X).exp()
         return Npdfs
+        
+class Utils(SafeTensorOperator):
+    def __init__(self):
+        super().__init__()
+
+    

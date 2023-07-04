@@ -4,7 +4,7 @@ from .._gp import update_gp, predict, predictive_covariance
 from .._utils import Utils
 
 
-class ScaleMmltGP:
+class ScaleMmltGP(Utils):
     def __init__(
         self,
         Xobs,
@@ -55,8 +55,8 @@ class ScaleMmltGP:
            - train_like: bool, flag whether or not to update GP likelihood noise variance
            - optimiser: string, select the optimiser ["L-BFGS-B", "Adam"]
         """
+        super().__init__()
         self.gp_kernel = gp_kernel
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.alpha_factor = 1
         self.alpha = alpha_factor
         self.lik = lik
@@ -68,9 +68,8 @@ class ScaleMmltGP:
         self.optimiser = optimiser
         self.is_bq = True
 
-        self.jitter = 0  # 1e-6
+        self.jitter = self.tensor(0)  # 1e-6
         self.Y_log = copy.deepcopy(Yobs)
-        self.utils = Utils(self.device)
 
         self.model = update_gp(
             Xobs,
@@ -95,7 +94,7 @@ class ScaleMmltGP:
            - y_h: torch.tensor, warped observations in h space that contains no anomalies and the updated alpha hyperparameter.
         """
 
-        y = self.utils.remove_anomalies(y_obs)
+        y = self.remove_anomalies(y_obs)
         self.beta = torch.max(y)
         y_g = torch.exp(y - self.beta)
         y_h = self.warp_from_g_to_h(y_g)
