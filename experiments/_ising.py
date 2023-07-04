@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import itertools
 from SOBER._prior import BinaryPrior
+from SOBER._utils import TensorManager
 
 
 ISING_GRID_H = 4
@@ -208,6 +209,7 @@ def setup_ising():
     n_dims_binary = ISING_N_EDGES # number of dimensions for binary variables
     n_dims = n_dims_binary # total number of dimensions
     
+    tm = TensorManager()
     prior = BinaryPrior(n_dims)
     ising = Ising(0.0001)
     
@@ -216,8 +218,9 @@ def setup_ising():
         return -1 * eval_.squeeze()
 
     def TestFunction(X):
-        return torch.tensor(
-            [eval_objective(x) for x in X]
-        ).squeeze()
-    
+        return tm.standardise_tensor(
+            torch.tensor(
+                [eval_objective(x) for x in X]
+            ).squeeze()
+        )
     return prior, TestFunction

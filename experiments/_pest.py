@@ -1,9 +1,11 @@
 import os
 import torch
 import numpy as np
+from abc import abstractmethod
 from collections import OrderedDict
 from SOBER._prior import CategoricalPrior
-from abc import abstractmethod
+from SOBER._utils import TensorManager
+
 
 PESTCONTROL_N_CHOICE = 5
 PESTCONTROL_N_STAGES = 15
@@ -176,6 +178,7 @@ def setup_pest():
     # Set up the categories of discrete variables
     categories = torch.arange(n_discrete).float().repeat(n_dims_disc,1)
     
+    tm = TensorManager()
     prior = CategoricalPrior(categories)
     pest = PestControl(normalize=False)
     
@@ -184,8 +187,9 @@ def setup_pest():
         return -1 * eval_.squeeze()
 
     def TestFunction(X):
-        return torch.tensor(
-            [eval_objective(x) for x in X]
-        ).squeeze()
-    
+        return tm.standardise_tensor(
+            torch.tensor(
+                [eval_objective(x) for x in X]
+            ).squeeze()
+        )
     return prior, TestFunction

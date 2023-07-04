@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 from functorch import vmap
 from torch.distributions.normal import Normal
 from SOBER._prior import TruncatedGaussian
+from SOBER._utils import TensorManager
 
 
-class CanonicalECMTwoRCs:
+class CanonicalECMTwoRCs(TensorManager):
     def __init__(self, rt, r1_, t1, r2_, t2, sigma, omega):
         """
         Args:
@@ -17,8 +18,9 @@ class CanonicalECMTwoRCs:
             - sigma: torch.tensor, experimental noise variance
             - omega: torch.tensor, angular frequency [rad/s]
         """
-        self.omega = omega
-        self.noise_sig = torch.tensor(sigma)
+        super().__init__()
+        self.omega = self.standardise_tensor(omega)
+        self.noise_sig = self.tensor(sigma)
         self.normalise_freq()
         self.set_parameters(rt, r1_, t1, r2_, t2)
         self.synthetic_data(self.noise_sig)
@@ -86,10 +88,9 @@ class CanonicalECMTwoRCs:
             - sigma: torch.tensor, experimental noise variance
         """
         R = torch.exp(-torch.exp(sigma))
-        self.reZ = self.real_part() + Normal(0, 1).sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
-        self.imZ = self.imarginary_part() + Normal(0, 1).sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
-        #self.Rt_syn = copy.deepcopy(self.Rt)
-        #self.LL = self.loglikelihood(sigma)
+        std_norm = Normal(self.tensor(0), self.tensor(1))
+        self.reZ = self.real_part() + std_norm.sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
+        self.imZ = self.imarginary_part() + std_norm.sample(torch.Size([len(self.omega)])) * torch.sqrt(R)
         
     def error(self, _theta):
         theta = torch.squeeze(_theta).detach()
@@ -128,17 +129,35 @@ class CanonicalECMTwoRCs:
 
     def plot(self):
         # without noise
-        plt.scatter(self.real_part(), self.imarginary_part())
+        plt.scatter(
+            self.numpy(self.real_part()), 
+            self.numpy(self.imarginary_part()),
+        )
         plt.show()
-        plt.scatter(torch.log10(self.omega / (2 * torch.pi)), self.real_part())
-        plt.scatter(torch.log10(self.omega / (2 * torch.pi)), self.imarginary_part())
+        plt.scatter(
+            self.numpy(torch.log10(self.omega / (2 * torch.pi))),
+            self.numpy(self.real_part()),
+        )
+        plt.scatter(
+            self.numpy(torch.log10(self.omega / (2 * torch.pi))),
+            self.numpy(self.imarginary_part()),
+        )
         plt.show()
 
         # with noise
-        plt.scatter(self.reZ, self.imZ)
+        plt.scatter(
+            self.numpy(self.reZ), 
+            self.numpy(self.imZ),
+        )
         plt.show()
-        plt.scatter(torch.log10(self.omega / (2 * torch.pi)), self.reZ)
-        plt.scatter(torch.log10(self.omega / (2 * torch.pi)), self.imZ)
+        plt.scatter(
+            self.numpy(torch.log10(self.omega / (2 * torch.pi))),
+            self.numpy(self.reZ),
+        )
+        plt.scatter(
+            self.numpy(torch.log10(self.omega / (2 * torch.pi))),
+            self.numpy(self.imZ),
+        )
         plt.show()
 
     def __call__(self, _theta):
@@ -177,7 +196,7 @@ def setup_ecm_two():
     bounds = torch.tensor([
         [1,-2,-2,-2, -2],
         [3, 2, 2, 2,  2],
-    ]).float()
+    ])
     prior = TruncatedGaussian(mu_pi, cov_pi, bounds)
     
     TestFunction = vmap(TwoRCsModel) # True discrepancy function

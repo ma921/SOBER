@@ -22,6 +22,7 @@ from sklearn.svm import SVR
 from torch import Tensor
 from xgboost import XGBRegressor
 from SOBER._prior import MixedBinaryPrior
+from SOBER._utils import TensorManager
 
 
 class DiscreteTestProblem(BaseTestProblem):
@@ -291,10 +292,13 @@ def setup_svm():
     df = pd.read_csv(data_path)
     data = np.array(df)
     svm = SVMFeatureSelection(n_dims, data)
+    tm = TensorManager()
     
     def TestFunction(X):
         eval_ = svm(X)
-        return -1 * eval_.squeeze()
+        return tm.standardise_tensor(
+            -1 * eval_.squeeze()
+        )
 
     prior = MixedBinaryPrior(
         n_dims_cont, 

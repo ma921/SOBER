@@ -1,8 +1,10 @@
 import torch
 from botorch.test_functions import Hartmann
 from botorch.test_functions import Shekel
-from botorch.utils.transforms import unnormalize
+from SOBER._utils import TensorManager
 
+
+tm = TensorManager()
 hart6 = Hartmann(dim=6, negate=True)
 shekel = Shekel(negate=True)
 
@@ -21,7 +23,7 @@ def AckleyFunction(x):
     
 def BraninFunction(x):
     x = torch.atleast_2d(x)
-    return ((x.sin() + (3*x).cos()/2).square() / ((x/2).square()+0.3)).prod(axis=1)    
+    return ((x.sin() + (3*x).cos()/2).square() / ((x/2).square()+0.3)).prod(axis=1)   
 
 def optimisant(x, i):
     return 100*(x[:,i+1] - x[:,i].pow(2)).pow(2) + (x[:,i] - 1).pow(2)
@@ -34,7 +36,11 @@ def RosenbrockFunction(x):
     ]).reshape(n_data, n_dims-1).mean(axis=1)
 
 def HartmannFunction(x):
-    return hart6(unnormalize(x, hart6.bounds))
+    return tm.standardise_tensor(
+        hart6(x)
+    )
 
 def ShekelFunction(x):
-    return shekel(x)
+    return tm.standardise_tensor(
+        shekel(x)
+    )

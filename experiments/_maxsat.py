@@ -4,7 +4,7 @@ import numpy as np
 import itertools
 from abc import abstractmethod
 from SOBER._prior import BinaryPrior
-
+from SOBER._utils import TensorManager
 
 class TestFunction:
     """
@@ -107,6 +107,7 @@ def setup_maxsat():
     n_dims_binary = maxsat_.n_variables # number of dimensions for binary variables
     n_dims = n_dims_binary # total number of dimensions
     
+    tm = TensorManager()
     prior = BinaryPrior(n_dims)    
     
     def eval_objective(x):
@@ -114,8 +115,9 @@ def setup_maxsat():
         return -1 * eval_.squeeze()
 
     def TestFunction(X):
-        return torch.tensor(
-            [eval_objective(x) for x in X]
-        ).squeeze()
-    
+        return tm.standardise_tensor(
+            torch.tensor(
+                [eval_objective(x) for x in X]
+            ).squeeze()
+        )
     return prior, TestFunction

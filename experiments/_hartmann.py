@@ -19,7 +19,7 @@ def setup_hartmann():
     maxs = _max * torch.ones(n_dims_cont)
     bounds = torch.vstack([mins, maxs])
     
-    prior = Uniform(bounds, n_dims_cont)
+    prior = Uniform(bounds)
     TestFunction = HartmannFunction
     
     return prior, TestFunction
