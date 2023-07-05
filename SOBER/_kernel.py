@@ -2,7 +2,7 @@ from ._gp import predictive_covariance, predict_mean
 import torch.distributions as D
 
 class Kernel:
-    def __init__(self, model, mode="predictive_covariance", pi=None):
+    def __init__(self, model, mode="predictive_covariance"):
         """
         Definition of kernel for recombination.
         
