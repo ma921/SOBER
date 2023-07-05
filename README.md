@@ -3,7 +3,7 @@
 Fast Bayesian optimization, quadrature, inference over arbitrary domain with GPU parallel acceleration based on GPytorch and BoTorch.
 The paper is here [arXiv](https://arxiv.org/abs/2301.11832),
 
-![Animate](./docs/animated.gif)
+![Animate](./docs/animated_with_plot.gif)
 
 - Red star: ground truth
 - black crosses: next batch queries recommended by SOBER
