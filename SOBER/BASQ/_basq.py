@@ -9,7 +9,7 @@ class BASQ(TensorManager):
         prior, 
         model,
         sober,
-        ratio_wkde=0.5
+        ratio_wkde=1
     ):
         """
         inference of evidence and posterior by BASQ.
@@ -25,7 +25,7 @@ class BASQ(TensorManager):
         self.prior = prior
         self.update_model(model, sober, ratio_wkde=ratio_wkde)
 
-    def update_model(self, model, sober, ratio_wkde=0.5):
+    def update_model(self, model, sober, ratio_wkde=1):
         """
         Update model
         
