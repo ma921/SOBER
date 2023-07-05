@@ -9,7 +9,7 @@ class BASQ(TensorManager):
         prior, 
         model,
         sober,
-        ratio_wkde=1
+        ratio_wkde=0.5
     ):
         """
         inference of evidence and posterior by BASQ.

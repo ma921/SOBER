@@ -33,7 +33,7 @@ class PI:
             (mu_pred - self.eta) / var_pred.sqrt()
         )
         if log:
-            return lfi.log()
+            return (lfi + torch.finfo().eps).log()
         else:
             return lfi
     
@@ -49,7 +49,7 @@ class PI:
         - pi: torch.tensor, the pi values at X_cand
         """
         if self.label == "ts":
-            return self.ts(X_cand)
+            raise NotImplementedError("Not implemented yet")
         elif self.label == "lfi":
             return self.lfi(X_cand, log=log)
         else:
@@ -84,7 +84,7 @@ class PI_FBGP:
         lfi = self.model.w_qd @ lfi
         
         if log:
-            return lfi.log()
+            return (lfi + torch.finfo().eps).log()
         else:
             return lfi
     
@@ -99,7 +99,12 @@ class PI_FBGP:
         Return:
         - pi: torch.tensor, the pi values at X_cand
         """
-        return self.lfi(X_cand, log=log)
+        if self.label == "ts":
+            raise NotImplementedError("Not implemented yet")
+        elif self.label == "lfi":
+            return self.lfi(X_cand, log=log)
+        else:
+            raise ValueError("Label should be either 'ts' or 'lfi'.")
 
 class PI_BQ:
     def __init__(self, model):
@@ -129,7 +134,7 @@ class PI_BQ:
             (mu_pred - 1) / var_pred.sqrt()
         )
         if log:
-            return lfi.log()
+            return (lfi + torch.finfo().eps).log()
         else:
             return lfi
     
@@ -144,5 +149,10 @@ class PI_BQ:
         Return:
         - pi: torch.tensor, the pi values at X_cand
         """
-        return self.lfi(X_cand, log=log)
+        if self.label == "ts":
+            raise NotImplementedError("Not implemented yet")
+        elif self.label == "lfi":
+            return self.lfi(X_cand, log=log)
+        else:
+            raise ValueError("Label should be either 'ts' or 'lfi'.")
     

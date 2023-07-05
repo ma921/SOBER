@@ -25,7 +25,9 @@ class Sober(EmpiricalSampler):
         - eps: float, the machine epsilon (the smallest number of floating point).
                For double precision; eps = torch.finfo().min
         - thresh: int, the number of non-zero weights which regrads anomalies.
-        - sampler_type: string, Select from "lfi" or "ts". LFI = likelihood-free inference, TS = Thompson sampling
+        - sampler_type: string, Select from "lfi" or "ts".
+                        LFI = likelihood-free inference, TS = Thompson sampling
+        - kernel_type: string, Select from ["predictive_covariance", "weighted_predictive_covariance"]
         - dataset_pruning: bool, perform pruning for dataset prior if true, otherwise not.
         """
         self.sampler_type = sampler_type
