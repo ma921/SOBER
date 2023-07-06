@@ -32,6 +32,7 @@ See `tutorials`.
 - 04 Fast fully Bayesian Gaussian process modelling
 - 05 Fast Bayesian inference for simulation-based inference
 - 06 Tips for drug discovery
+- 07 Compare with Thompson sampling
 
 ## Examples
 See `examples` for reproducing the results in the paper.
