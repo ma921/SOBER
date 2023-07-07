@@ -6,7 +6,7 @@ The paper is here [arXiv](https://arxiv.org/abs/2301.11832),
 ![Animate](./docs/animated_with_plot.gif)
 
 While the existing method (batch Thompson sampling; TS) is stuck in the local minima, SOBER robustly finds global optimmum.<br>
-SOBER enables a faster, more sample-efficient, more diversified, and more scalable than existing methods.<br>
+SOBER provides a faster, more sample-efficient, more diversified, and more scalable optimization scheme than existing methods.<br>
 In the paper, SOBER outperformed 11 competitive baselines on 12 synthetic and diverse real-world tasks.
 - Red star: ground truth
 - black crosses: next batch queries recommended by SOBER
