@@ -35,7 +35,7 @@ class WeightsStabiliser:
             weights /= weights.sum()
         else:
             weights = torch.ones_like(weights)/len(weights)
-        return weights
+        return weights.detach()
     
     def check_weights(self, weights):
         """

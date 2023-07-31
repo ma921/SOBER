@@ -8,5 +8,5 @@ def setting_parameters():
        - dtype: torch.dtype, torch.float or torch.double
     """
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    dtype = torch.float
+    dtype = torch.double
     return device, dtype

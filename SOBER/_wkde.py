@@ -3,12 +3,16 @@ import torch
 import warnings
 import matplotlib.pyplot as plt
 from torch.distributions.multivariate_normal import MultivariateNormal
-from ._utils import Utils
+from ._utils import SafeTensorOperator
 from ._weights import WeightsStabiliser
 from ._prior import BasePrior
 from .mvnorm import multivariate_normal_cdf as Phi
 
-class WeightedKernelDensityEstimation(WeightsStabiliser, Utils, BasePrior):
+class WeightedKernelDensityEstimation(
+    WeightsStabiliser, 
+    SafeTensorOperator, 
+    BasePrior,
+):
     def __init__(
         self,
         X,
@@ -33,7 +37,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser, Utils, BasePrior):
                              The default is false as it produces significant overhead.
         """
         WeightsStabiliser.__init__(self, eps=0, thresh=n_kde) # inherit WeightsStabiliser class
-        Utils.__init__(self) # inherit Utils class
+        SafeTensorOperator.__init__(self) # inherit SafeTensorOperator class
         BasePrior.__init__(self) # inherit BasePrior class
         self.n_dims = n_dims
         self.bounds = bounds
@@ -232,7 +236,7 @@ class WeightedKernelDensityEstimation(WeightsStabiliser, Utils, BasePrior):
         ])
         
         if len(samples) > N_rec:
-            indice = torch.multinomial(torch.ones(len(samples)), N_rec)
+            indice = torch.multinomial(self.ones(len(samples)), N_rec)
             samples = samples[indice]
         return samples
     
