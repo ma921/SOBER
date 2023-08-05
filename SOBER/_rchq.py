@@ -1,5 +1,7 @@
 import torch
-from ._utils import TensorManager
+from ._utils import SafeTensorOperator
+from ._utils import SafeTensorOperator
+tm = SafeTensorOperator()
 
 def recombination(
     pts_rec,         # random samples for recombination
@@ -26,12 +28,13 @@ def recombination(
         - x: torch.tensor, the sparcified samples from pts_rec. The number of samples are determined by self.batch_size
         - w: torch.tensor, the positive weights for kernel quadrature as discretised summation.
     """
-    tm = TensorManager(device=device, dtype=dtype)
     return rc_kernel_svd(pts_rec, pts_nys, num_pts, kernel, tm, mu=init_weights, calc_obj=calc_obj)
 
 
 def ker_svd_sparsify(pt, s, kernel):
-    _U, S, _ = torch.svd_lowrank(kernel(pt, pt), q=s)
+    mat = kernel(pt, pt)
+    mat = tm.make_cov_psd(mat)
+    _U, S, _ = torch.svd_lowrank(mat, q=s)
     U = -1 * _U.T  # Hermitian
     return S, U
 
@@ -77,6 +80,7 @@ def Mod_Tchernychova_Lyons(samp, U_svd, pt_nys, kernel, tm, mu=None, calc_obj=No
                 X_mat = torch.cat((X_mat, torch.reshape(
                     obj[idx_story], (1, -1))), 0)
                 X_mat_raw = torch.clone(X_mat[:-1])
+            
             w_star, idx_star, x_star, _, ERR, _, _ = Tchernychova_Lyons_CAR(
                 X_mat.T, torch.clone(mu[idx_story]), tm, DEBUG)
 
@@ -142,14 +146,14 @@ def Mod_Tchernychova_Lyons(samp, U_svd, pt_nys, kernel, tm, mu=None, calc_obj=No
                 mu[idx_last_part].unsqueeze(1)
             ).sum(axis=0)
             tot_weights[-1] += torch.sum(mu[idx_last_part], 0)
-
+        
         X_tmp = torch.divide(X_tmp, tot_weights.unsqueeze(0).T)
 
         # sparsify for the case use_obj is True
         if use_obj:
             X_tmp_raw = torch.clone(X_tmp[:, :n])
             obj_raw = X_tmp[:, -1:].reshape(-1)
-
+        
         w_star, idx_star, _, _, ERR, _, _ = Tchernychova_Lyons_CAR(
             X_tmp, torch.clone(tot_weights), tm
         )

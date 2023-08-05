@@ -1,6 +1,7 @@
 import copy
 import torch
 import warnings
+from ._prior import Uniform, BinaryPrior, CategoricalPrior, MixedBinaryPrior, MixedCategoricalPrior
 from ._prior_update import update_mixed_prior, update_binary_prior, update_categorical_prior, update_continuous_prior
 from ._weights import WeightsStabiliser
 from ._rchq import recombination
@@ -76,7 +77,7 @@ class EmpiricalSampler(RecombinationSampler):
         - label: string, prior type. Select from "continuous", "binary", "categorical", "mixedbinary", "mixedcategorical".
         """
         super().__init__(kernel, thresh=thresh)  # RecombinationSampler class initialisation
-        self.prior_initial = copy.deepcopy(prior)
+        #self.prior_initial = copy.deepcopy(prior)
         self.thresh_initial = copy.deepcopy(thresh)
         self.prior = prior
         self.pi = pi
@@ -87,7 +88,27 @@ class EmpiricalSampler(RecombinationSampler):
         """
         Initialise prior
         """
-        self.prior = copy.deepcopy(self.prior_initial)
+        if self.label == "continuous":
+            self.prior = Uniform(self.prior.bounds)
+        elif self.label == "binary":
+            self.prior = BinaryPrior(self.prior.n_dims)
+        elif self.label == "categorical":
+            self.prior = CategoricalPrior(self.prior.categories)
+        elif self.label == "mixedbinary":
+            self.prior = MixedBinaryPrior(
+                self.prior.n_dims_cont, 
+                self.prior.n_dims_binary,
+                self.prior.bounds,
+                self.prior.continous_first,
+            )
+        elif self.label == "mixedcategorical":
+            self.prior = MixedCategoricalPrior(
+                self.prior.n_dims_cont, 
+                self.prior.n_dims_disc,
+                self.prior.categories,
+                self.prior.bounds,
+                self.prior.continous_first,
+            )
 
     def update_prior(self, X_cand, weights, verbose=False):
         """
@@ -264,7 +285,7 @@ class EmpiricalSampler(RecombinationSampler):
         if self.check_weights(weights):
             if verbose:
                 print("update prior...")
-                
+
             if self.check_categorical():
                 self.update_prior(X_indices, weights, verbose=verbose)
                 self.thresh = n_nys
@@ -292,8 +313,12 @@ class EmpiricalSampler(RecombinationSampler):
                 self.thresh = n_nys
                 X_cand, weights = self.recursive_sampling(n_rec, n_repeat=self.thresh, verbose=verbose)
         
-        idx_nys = self.deweighted_resampling(weights, n_nys)
-        X_nys = X_cand[idx_nys]
+        if self.label == "continuous":
+            X_nys = self.kmeans_resampling(X_cand, n_clusters=n_nys)
+        else:
+            idx_nys = self.deweighted_resampling(weights, n_nys)
+            X_nys = X_cand[idx_nys]
+        
         self.thresh = copy.deepcopy(self.thresh_initial)
         return X_cand, X_nys, weights
     
@@ -348,8 +373,9 @@ class EmpiricalSampler(RecombinationSampler):
             weights = weights[idx_sampled]
         
         weights = self.cleansing_weights(weights)
-        idx_nys = self.deweighted_resampling(weights, n_nys)
-        X_nys = X_cand[idx_nys]
+        #idx_nys = self.deweighted_resampling(weights, n_nys)
+        #X_nys = X_cand[idx_nys]
+        X_nys = self.kmeans_resampling(X_cand, n_clusters=n_nys)
         
         if self.dataset_pruning:
             return idx_sampled, X_cand, X_nys, weights

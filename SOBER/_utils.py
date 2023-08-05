@@ -119,7 +119,11 @@ class SafeTensorOperator(TensorManager):
         Returns:
            - flag: bool, flag to judge whether or not the given matrix is positive semi-definite
         """
-        return bool((mat == mat.T).all() and (torch.linalg.eig(mat)[0].real >= 0).all())
+        try:
+            torch.linalg.cholesky(mat)
+            return bool((mat == mat.T).all() and (torch.linalg.eig(mat)[0].real >= 0).all())
+        except:
+            return False
         
     def make_cov_psd(self, cov):
         """
