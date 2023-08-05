@@ -63,7 +63,7 @@ class WeightedKernelDensityEstimation(
             idx_accept = self.deweighted_resampling(Y, self.n_kde)
         else:
             idx_accept = self.arange(Y.size(0))[self.cleansing_weights(Y) > 0]
-            self.n_kde = idx_accept.sum()
+            self.n_kde = len(idx_accept)
             if self.n_kde < 1:
                 raise ValueError("Invalid weights")
             elif self.n_kde > self.n_kde_init:
