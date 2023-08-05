@@ -264,7 +264,7 @@ class EmpiricalSampler(RecombinationSampler):
         if self.check_weights(weights):
             if verbose:
                 print("update prior...")
-                
+
             if self.check_categorical():
                 self.update_prior(X_indices, weights, verbose=verbose)
                 self.thresh = n_nys
@@ -292,8 +292,9 @@ class EmpiricalSampler(RecombinationSampler):
                 self.thresh = n_nys
                 X_cand, weights = self.recursive_sampling(n_rec, n_repeat=self.thresh, verbose=verbose)
         
-        idx_nys = self.deweighted_resampling(weights, n_nys)
-        X_nys = X_cand[idx_nys]
+        #idx_nys = self.deweighted_resampling(weights, n_nys)
+        #X_nys = X_cand[idx_nys]
+        X_nys = self.kmeans_resampling(X_cand, n_clusters=n_nys)
         self.thresh = copy.deepcopy(self.thresh_initial)
         return X_cand, X_nys, weights
     
@@ -348,8 +349,9 @@ class EmpiricalSampler(RecombinationSampler):
             weights = weights[idx_sampled]
         
         weights = self.cleansing_weights(weights)
-        idx_nys = self.deweighted_resampling(weights, n_nys)
-        X_nys = X_cand[idx_nys]
+        #idx_nys = self.deweighted_resampling(weights, n_nys)
+        #X_nys = X_cand[idx_nys]
+        X_nys = self.kmeans_resampling(X_cand, n_clusters=n_nys)
         
         if self.dataset_pruning:
             return idx_sampled, X_cand, X_nys, weights
