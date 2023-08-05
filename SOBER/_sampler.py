@@ -373,9 +373,8 @@ class EmpiricalSampler(RecombinationSampler):
             weights = weights[idx_sampled]
         
         weights = self.cleansing_weights(weights)
-        #idx_nys = self.deweighted_resampling(weights, n_nys)
-        #X_nys = X_cand[idx_nys]
-        X_nys = self.kmeans_resampling(X_cand, n_clusters=n_nys)
+        idx_nys = self.deweighted_resampling(weights, n_nys)
+        X_nys = X_cand[idx_nys]
         
         if self.dataset_pruning:
             return idx_sampled, X_cand, X_nys, weights
