@@ -41,11 +41,14 @@ class WeightedKernelDensityEstimation(
         BasePrior.__init__(self) # inherit BasePrior class
         self.n_dims = n_dims
         self.bounds = bounds
-        self.n_kde = min([n_kde, len(X)])
+        self.n_kde_init = min([n_kde, len(X)])
         self.bw_method = bw_method
         self.compute_cdf = compute_cdf
         self.type = "continuous"
         self.initialisation(X, W)
+        
+    def initialise_n_kde(self):
+        self.n_kde = copy.deepcopy(self.n_kde_init)
     
     def initialisation(self, X, Y):
         """
@@ -55,13 +58,17 @@ class WeightedKernelDensityEstimation(
         - X: torch.tensor, the observed data X
         - Y: torch.tensor, the unnormalised weights
         """
+        self.initialise_n_kde()
         if self.check_weights(Y):
             idx_accept = self.deweighted_resampling(Y, self.n_kde)
         else:
             idx_accept = self.arange(Y.size(0))[self.cleansing_weights(Y) > 0]
-            self.n_kde = len(idx_accept)
+            self.n_kde = idx_accept.sum()
             if self.n_kde < 1:
                 raise ValueError("Invalid weights")
+            elif self.n_kde > self.n_kde_init:
+                self.initialise_n_kde()
+                idx_accept = self.deweighted_resampling(Y, self.n_kde)
         
         self.Xobs = X[idx_accept]
         self.weights = self.cleansing_weights(Y[idx_accept])
