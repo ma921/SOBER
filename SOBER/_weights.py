@@ -1,6 +1,5 @@
 import torch
 import warnings
-from pykeops.torch import LazyTensor
 
 class WeightsStabiliser:
     def __init__(
@@ -103,8 +102,8 @@ def KMeans(x, K=10, Niter=10):
     N, D = x.shape  # Number of samples, dimension of the ambient space
     c = x[:K, :].clone()  # Simplistic initialization for the centroids
 
-    x_i = LazyTensor(x.view(N, 1, D))  # (N, 1, D) samples
-    c_j = LazyTensor(c.view(1, K, D))  # (1, K, D) centroids
+    x_i = x.view(N, 1, D)  # (N, 1, D) samples
+    c_j = c.view(1, K, D)  # (1, K, D) centroids
 
     # K-means loop:
     # - x  is the (N, D) point cloud,
