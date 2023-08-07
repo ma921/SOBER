@@ -294,6 +294,12 @@ def predictive_covariance(x, y, model):
     KXy = model.covar_module.forward(Xobs, y)
     cov_xy = Kxy - KxX @ woodbury_inv @ KXy
 
-    d = min(len(x), len(y))
-    cov_xy[range(d), range(d)] = cov_xy[range(d), range(d)] + lik_var
+    """
+    if len(x.shape) == 3 or len(y.shape) == 3:
+        d = min(x.shape[1], y.shape[1])
+        cov_xy[:, range(d), range(d)] += lik_var        
+    else:
+        d = min(len(x), len(y))
+        cov_xy[range(d), range(d)] += lik_var
+    """
     return cov_xy

@@ -1,3 +1,4 @@
+import time
 import torch
 from ._utils import SafeTensorOperator
 tm = SafeTensorOperator()
@@ -116,18 +117,34 @@ def Mod_Tchernychova_Lyons(samp, U_svd, pt_nys, kernel, tm, mu=None, calc_obj=No
 
         idx = idx_story[:number_of_el *
                         number_of_sets].reshape(number_of_el, -1)
+        
+        # compute X_for_nys and X_for_obj
+        N_approx = number_of_sets * number_of_el
+        _idx_tmp = idx_story[:N_approx].reshape(number_of_el, number_of_sets)
+        K = kernel(pt_nys, samp[_idx_tmp]) * mu[_idx_tmp].unsqueeze(1)
         X_for_nys = tm.zeros(length, number_of_sets)
-        X_for_obj = tm.zeros(1, number_of_sets)
-        for i in range(number_of_el):
-            idx_tmp_i = idx_story[i * number_of_sets:(i + 1) * number_of_sets]
-            X_for_nys += torch.multiply(
-                kernel(pt_nys, samp[idx_tmp_i]),
-                mu[idx_tmp_i].unsqueeze(0)
-            )
-            if use_obj:
-                X_for_obj += torch.multiply(
-                    torch.reshape(obj[idx_tmp_i], (1, -1)), mu[idx_tmp_i].unsqueeze(0))
+        X_for_nys += K.sum(axis=0)
 
+        N_rest = len(idx_story) - N_approx
+        if N_rest > 0:
+            idx_rest = idx_story[N_approx : N_approx + N_rest]
+            K = kernel(pt_nys, samp[idx_rest]) * mu[idx_rest].unsqueeze(0)
+            K_pad = torch.cat(
+                (K, tm.zeros(length, number_of_sets - N_rest)),
+                dim=1,
+            )
+            X_for_nys += K_pad
+
+        if use_obj:
+            X_for_obj = tm.zeros(1, number_of_sets)
+            X_for_obj += (
+                obj[_idx_tmp].unsqueeze(1) * mu[_idx_tmp].unsqueeze(1)
+            ).sum(axis=0).reshape(-1,1)
+            if N_rest > 0:
+                mat_obj = (obj[idx_rest].unsqueeze(0) * mu[idx_rest].unsqueeze(0)).reshape(-1,1)
+                mat_obj_pad = torch.cat((mat_obj, tm.zeros(number_of_sets - N_rest, 1)), dim=0)
+                X_for_obj += mat_obj_pad        
+        
         X_tmp_tr = U_svd @ X_for_nys
         if use_obj:
             X_tmp_tr = torch.cat((X_tmp_tr, X_for_obj), 0)
@@ -220,6 +237,10 @@ def Tchernychova_Lyons_CAR(X, mu, tm, DEBUG=False):
     for _ in range(N - n):
         lm = len(mu)
         plis = Phi[:, 0] > 0
+        # Added 7th Aug, 2023.
+        if plis.sum() == 0:
+            break
+        
         alpha = tm.zeros(lm)
         alpha[plis] = mu[plis] / Phi[plis, 0]
         idx = tm.arange(lm)[plis]
