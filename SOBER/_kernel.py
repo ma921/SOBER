@@ -40,5 +40,8 @@ class Kernel:
         mu_x = predict_mean(x, self.model)
         mu_y = predict_mean(y, self.model)
         cov_xy = predictive_covariance(x, y, self.model)
-        CLy = mu_x.unsqueeze(1) * cov_xy * mu_y.unsqueeze(0)
+        if len(mu_x.shape) == 1 and len(mu_y.shape) == 1:
+            CLy = mu_x.unsqueeze(1) * cov_xy * mu_y.unsqueeze(0)
+        else:
+            CLy = mu_x.unsqueeze(1) * cov_xy * mu_y.unsqueeze(1)
         return CLy

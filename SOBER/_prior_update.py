@@ -136,8 +136,22 @@ class CategoricalMLE(BaseMLE):
         self.weights = weights.detach()
         self.x_disc = x_disc.detach()
         self.n_dims_disc = x_disc.size(1)
-        self.n_categories = prior.n_categories
+        self.prior = prior
         self.n_max = n_max
+        
+    def reshape_weights(self, _w):
+        """
+        Reshape the weights for CategoricalPrior class
+        
+        Args:
+        - _w: torch.tensor, the one-dimensional weights to be optimised
+        
+        Return:
+        - w: list, the reshaped weights _w
+        """
+        sections = torch.cat([torch.tensor([0]), self.prior.n_categories.cumsum(0)])
+        w = [_w[sections[idx]:sections[idx+1]] for idx in range(self.prior.n_dims)]
+        return w
     
     def objective(self, _w):
         """
@@ -149,9 +163,10 @@ class CategoricalMLE(BaseMLE):
         Return:
         - ans: torch.float, the negative log likelihood of the given w
         """
-        w = _w.reshape(self.n_dims_disc, self.n_categories)
-        dist = D.Categorical(w)
-        ans = self.weights @ dist.log_prob(self.x_disc).sum(axis=1)
+        w = self.reshape_weights(_w)
+        self.prior.weights = w
+        self.prior.initialise()
+        ans = self.weights @ self.prior.logpdf(self.x_disc)
         return -1 * ans
     
     def transform(self, w):
@@ -186,7 +201,7 @@ class CategoricalMLE(BaseMLE):
         Return:
         result: torch.tensor, the optimised weights for the Bernoulli sampler
         """
-        self.x_lbfgs = self.ones(self.n_dims_disc * self.n_categories) * 0.5
+        self.x_lbfgs = torch.hstack(self.prior.weights)
         self.x_lbfgs.requires_grad = True
         
         self.lbfgs = optim.LBFGS([self.x_lbfgs],
@@ -210,7 +225,7 @@ class CategoricalMLE(BaseMLE):
         - prior_disc: class, the optimised categorical prior
         """
         weights_updated = self.run()
-        prior_disc.cat.probs = weights_updated
+        prior_disc.weights = self.reshape_weights(weights_updated)
         return prior_disc
     
 def update_binary_prior(weights, x_binary, prior_binary):

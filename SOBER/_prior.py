@@ -189,24 +189,32 @@ class CategoricalPrior(BasePrior):
         Categorical prior class
         
         Args:
-        - n_dims: int, the number of dimensions
-        - _min: int, the lower bound of categorical variables
-        - _max: int, the upper bound of categorical variables
-        - n_discrete: int, the number of categories for each dimension
+        - categories: list, the number of dimensions x number of categories
         """
         super().__init__() # call TensorManager
-        self.n_dims, self.n_categories = categories.shape
-        self.categories = self.standardise_tensor(categories)
         self.type = "categorical"
-        self.set_prior()
+        self.set_prior(categories)
         
-    def set_prior(self):
+    def set_prior(self, categories):
         """
         Set parameters and functions
+        
+        Args:
+        - categories: list, the number of dimensions x number of categories
         """
-        weights = self.ones(self.categories.shape) * 0.5
-        self.pmf = weights.unique()[0]
-        self.cat = D.Categorical(weights)
+        self.categories = [self.tensor(dim) for dim in categories]
+        self.n_dims = len(categories)
+        self.n_categories = self.tensor(
+            [len(category) for category in self.categories]
+        ).long()
+        self.weights = [self.ones(n_category) * 0.5 for n_category in self.n_categories]
+        self.initialise()
+        
+    def initialise(self):
+        """
+        Reset the weights of the categorical distribution classes
+        """
+        self.cats = [D.Categorical(weight) for weight in self.weights]
     
     def find_corresponding_categories(self, indices):
         """
@@ -218,24 +226,11 @@ class CategoricalPrior(BasePrior):
         Return:
         - samples: torch.tensor, categories correspinding to the given indices
         """
-        row_indices = self.arange(self.n_dims).unsqueeze(1)
-        column_indices = indices.unsqueeze(2)
-        samples = self.categories[row_indices, column_indices].squeeze()
+        indexing_tensor = self.arange(indices.size(1))
+        samples = torch.stack([
+            self.categories[dim][indices[:, dim]] for dim in indexing_tensor
+        ], dim=1)
         return samples
-    
-    def sample(self, n_samples):
-        """
-        Sampling from categorical prior
-        
-        Args:
-        - n_samples: int, the number of samples
-        
-        Return:
-        - samples: torch.tensor, random samples from categorical distribution
-        """
-        indices = self.cat.sample(torch.Size([n_samples]))
-        samples = self.find_corresponding_categories(indices)
-        return self.standardise_device(samples)
     
     def sample_both(self, n_samples):
         """
@@ -248,9 +243,36 @@ class CategoricalPrior(BasePrior):
         - samples: torch.tensor, random samples from categorical distribution
         - indices: torch.tensor, indices of random samples
         """
-        indices = self.cat.sample(torch.Size([n_samples]))
+        indices = torch.vstack([cat.sample(torch.Size([n_samples])) for cat in self.cats]).T
         samples = self.find_corresponding_categories(indices)
         return self.standardise_device(samples), indices
+    
+    def sample(self, n_samples):
+        """
+        Sampling from categorical prior
+        
+        Args:
+        - n_samples: int, the number of samples
+        
+        Return:
+        - samples: torch.tensor, random samples from categorical distribution
+        """
+        samples, _ = self.sample_both(n_samples)
+        return samples
+    
+    def logpdf(self, x):
+        """
+        The log probability mass function (PMF) over x
+        
+        Args:
+        - x: torch.tensor, the input where to compute PDF
+        
+        Return:
+        - pmfs: torch.tensor, the PMF over x
+        """
+        return torch.vstack([
+            self.cats[dim].log_prob(x[:,dim]) for dim in range(self.n_dims)
+        ]).sum(axis=0)
     
     def pdf(self, x):
         """
@@ -262,7 +284,7 @@ class CategoricalPrior(BasePrior):
         Return:
         - pmfs: torch.tensor, the PMF over x
         """
-        return (self.ones(x.size()) * self.pmf).prod(axis=1)
+        return self.logpdf(x).exp()
     
 class BinaryPrior(BasePrior):
     def __init__(self, n_dims):
