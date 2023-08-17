@@ -105,8 +105,10 @@ class Sober(EmpiricalSampler):
         learning_length = n_targets - self.n_init
         if (learning_length == 0) or (learning_length == batch_size):
             return False
-        
-        idx_max = torch.where((cummax >= y_max).diff() == True)[0][0]
+        try:
+            idx_max = torch.where((cummax >= y_max).diff() == True)[0][0]
+        except:
+            idx_max = self.tensor(0)
         n_interations = torch.tensor(learning_length / batch_size).ceil().long()
         for n_batches in range(1, n_interations+1):
             idx_batch = n_batches * batch_size
