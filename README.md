@@ -64,11 +64,8 @@ This code repository uses materials from the following public and provided codes
 - Thompson sampling: Kandasamy, K., Krishnamurthy, A., Schneider, J. and Póczos, B., 
 Parallelised Bayesian optimisation via Thompson sampling. International Conference on Artificial Intelligence and Statistics (AISTATS 2018) [code from BoTorch](https://botorch.org/tutorials/thompson_sampling), [paper](https://proceedings.mlr.press/v84/kandasamy18a.html)
 - Decoupled Thompson sampling: Wilson, J., Borovitskiy, V., Terenin, A., Mostowsky, P. and Deisenroth, M., Efficiently sampling functions from Gaussian process posteriors. International Conference on Machine Learning (ICML 2020) [code from @saitcakmak](https://github.com/saitcakmak/gp-sampling), [paper](https://arxiv.org/abs/2002.09309)
-- Determinantal Point Process (DPP) - Thompson sampling: Nava, E., Mutny, M. and Krause, A., Diversified sampling for batched bayesian optimization with determinantal point processes. International Conference on Artificial Intelligence and Statistics (AISTATS 2022)
-(the code is provided by the paper author [@elvisnava](https://github.com/elvisnava/)), [paper](https://arxiv.org/abs/2110.11665)
-- GIBBON [code from BoTorch](https://botorch.org/tutorials/GIBBON_for_efficient_batch_entropy_search). [paper](https://arxiv.org/abs/2102.03324)
-- Hallucination [paper](https://papers.nips.cc/paper_files/paper/2010/hash/e702e51da2c0f5be4dd354bb3e295d37-Abstract.html)
-- local penalisation [paper](https://proceedings.mlr.press/v51/gonzalez16a.html)
+- Determinantal Point Process (DPP) - Thompson sampling: Nava, E., Mutny, M. and Krause, A., Diversified sampling for batched bayesian optimization with determinantal point processes. International Conference on Artificial Intelligence and Statistics (AISTATS 2022). We appreciate the paper authors providing the code and allowing us to open-source here [@elvisnava](https://github.com/elvisnava/), [paper](https://arxiv.org/abs/2110.11665)
+- GIBBON: Moss, H.B., Leslie, D.S., Gonzalez, J. and Rayson, P., 2021. Gibbon: General-purpose information-based bayesian optimisation. The Journal of Machine Learning Research, 22(1), (JMLR 2021) [code from BoTorch](https://botorch.org/tutorials/GIBBON_for_efficient_batch_entropy_search). [paper](https://arxiv.org/abs/2102.03324)
 - TuRBO: Eriksson, D., Pearce, M., Gardner, J. R., Turner, R., & Poloczek, M. (2019). Scalable global optimization via local Bayesian optimization. Advances in Neural Information Processing Systems, 32 (NeurIPS 2019) [code from BoTorch](https://botorch.org/tutorials/turbo_1), [paper](https://arxiv.org/abs/1910.01739)
 
 ## Cite as
