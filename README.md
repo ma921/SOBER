@@ -28,16 +28,17 @@ In the paper, SOBER outperformed 11 competitive baselines on 12 synthetic and di
 - Arbitrary prior distribution for Bayesian inference
 
 ## Tutorials for practitioners/researchers
-We prepared the detailed explanations about how to customize SOBER for your tasks. <br>
+We prepared detailed explanations about how to customize SOBER for your tasks. <br>
 See `tutorials`.
 - 00 Quick start
 - 01 How does SOBER work?
-- 02 Customise prior for various domain type
+- 02 Customise prior for various domain types
 - 03 Customise acquisition function
 - 04 Fast fully Bayesian Gaussian process modelling
 - 05 Fast Bayesian inference for simulation-based inference
 - 06 Tips for drug discovery
 - 07 Compare with Thompson sampling
+- 08 Benchmarking against batch BO methods.ipynb
 
 ## Examples
 See `examples` for reproducing the results in the paper.
@@ -48,12 +49,25 @@ See `examples` for reproducing the results in the paper.
 We solve batch global optimization as Bayesian quadrature;
 ![plot](./docs/equation.png)<br>
 We select the batch query locations to minimize the integration error of the true function $f_\text{true}$ over the probability measure $\pi$.
-$\pi$ is the probability of global optimum locations estimated by SOBER, and becomes confident (shrink toward true global optima) over iterations.
+$\pi$ is the probability of global optimum locations estimated by SOBER and becomes confident (shrink toward true global optima) over iterations.
 
 ## Requirements
 - PyTorch
 - GPyTorch
 - BoTorch
+
+## Acknowledgement
+This code repository uses materials from the following public and provided codes. The authors thank the respective repository maintainers
+
+- BASQ [code](https://github.com/ma921/BASQ), [paper](https://proceedings.neurips.cc/paper_files/paper/2022/hash/697200c9d1710c2799720b660abd11bb-Abstract-Conference.html)
+- RCHQ [code](https://github.com/satoshi-hayakawa/kernel-quadrature), [paper](https://arxiv.org/abs/2107.09597v4)
+- Thompson sampling [code from BoTorch](https://botorch.org/tutorials/thompson_sampling), [paper](https://proceedings.mlr.press/v84/kandasamy18a.html)
+- Decoupled Thompson sampling [code from @saitcakmak](https://github.com/saitcakmak/gp-sampling), [paper](https://arxiv.org/abs/2002.09309)
+- Determinantal Point Process (DPP) - Thompson sampling (the code is provided by the paper author [@elvisnava](https://github.com/elvisnava/)), [paper](https://arxiv.org/abs/2110.11665)
+- GIBBON [code from BoTorch](https://botorch.org/tutorials/GIBBON_for_efficient_batch_entropy_search). [paper](https://arxiv.org/abs/2102.03324)
+- Hallucination [paper](https://papers.nips.cc/paper_files/paper/2010/hash/e702e51da2c0f5be4dd354bb3e295d37-Abstract.html)
+- local penalisation [paper](https://proceedings.mlr.press/v51/gonzalez16a.html)
+- TurBO [code from BoTorch](https://botorch.org/tutorials/turbo_1), [paper](https://arxiv.org/abs/1910.01739)
 
 ## Cite as
 Please cite this work as
