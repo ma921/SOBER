@@ -59,15 +59,15 @@ $\pi$ is the probability of global optimum locations estimated by SOBER and beco
 ## Acknowledgement
 This code repository uses materials from the following public and provided codes. The authors thank the respective repository maintainers
 
-- BASQ [code](https://github.com/ma921/BASQ), [paper](https://proceedings.neurips.cc/paper_files/paper/2022/hash/697200c9d1710c2799720b660abd11bb-Abstract-Conference.html)
-- RCHQ [code](https://github.com/satoshi-hayakawa/kernel-quadrature), [paper](https://arxiv.org/abs/2107.09597v4)
+- BASQ: Adachi, M., Hayakawa, S., Jørgensen, M., Oberhauser, H., Osborne, M. A., Fast Bayesian Inference with Batch Bayesian Quadrature via Kernel Recombination. Advances in Neural Information Processing Systems, 35 (NeurIPS 2022) [code](https://github.com/ma921/BASQ), [paper](https://proceedings.neurips.cc/paper_files/paper/2022/hash/697200c9d1710c2799720b660abd11bb-Abstract-Conference.html)
+- RCHQ: Hayakawa, S., Oberhauser, H., Lyons, T., Positively Weighted Kernel Quadrature via Subsampling. Advances in Neural Information Processing Systems, 35 (NeurIPS 2022) [code](https://github.com/satoshi-hayakawa/kernel-quadrature), [paper](https://arxiv.org/abs/2107.09597v4)
 - Thompson sampling [code from BoTorch](https://botorch.org/tutorials/thompson_sampling), [paper](https://proceedings.mlr.press/v84/kandasamy18a.html)
 - Decoupled Thompson sampling [code from @saitcakmak](https://github.com/saitcakmak/gp-sampling), [paper](https://arxiv.org/abs/2002.09309)
 - Determinantal Point Process (DPP) - Thompson sampling (the code is provided by the paper author [@elvisnava](https://github.com/elvisnava/)), [paper](https://arxiv.org/abs/2110.11665)
 - GIBBON [code from BoTorch](https://botorch.org/tutorials/GIBBON_for_efficient_batch_entropy_search). [paper](https://arxiv.org/abs/2102.03324)
 - Hallucination [paper](https://papers.nips.cc/paper_files/paper/2010/hash/e702e51da2c0f5be4dd354bb3e295d37-Abstract.html)
 - local penalisation [paper](https://proceedings.mlr.press/v51/gonzalez16a.html)
-- TurBO [code from BoTorch](https://botorch.org/tutorials/turbo_1), [paper](https://arxiv.org/abs/1910.01739)
+- TuRBO: Eriksson, D., Pearce, M., Gardner, J. R., Turner, R., & Poloczek, M. (2019). Scalable global optimization via local Bayesian optimization. Advances in Neural Information Processing Systems, 32 (NeurIPS 2019) [code from BoTorch](https://botorch.org/tutorials/turbo_1), [paper](https://arxiv.org/abs/1910.01739)
 
 ## Cite as
 Please cite this work as
