@@ -61,9 +61,11 @@ This code repository uses materials from the following public and provided codes
 
 - BASQ: Adachi, M., Hayakawa, S., Jørgensen, M., Oberhauser, H., Osborne, M. A., Fast Bayesian Inference with Batch Bayesian Quadrature via Kernel Recombination. Advances in Neural Information Processing Systems, 35 (NeurIPS 2022) [code](https://github.com/ma921/BASQ), [paper](https://proceedings.neurips.cc/paper_files/paper/2022/hash/697200c9d1710c2799720b660abd11bb-Abstract-Conference.html)
 - RCHQ: Hayakawa, S., Oberhauser, H., Lyons, T., Positively Weighted Kernel Quadrature via Subsampling. Advances in Neural Information Processing Systems, 35 (NeurIPS 2022) [code](https://github.com/satoshi-hayakawa/kernel-quadrature), [paper](https://arxiv.org/abs/2107.09597v4)
-- Thompson sampling [code from BoTorch](https://botorch.org/tutorials/thompson_sampling), [paper](https://proceedings.mlr.press/v84/kandasamy18a.html)
-- Decoupled Thompson sampling [code from @saitcakmak](https://github.com/saitcakmak/gp-sampling), [paper](https://arxiv.org/abs/2002.09309)
-- Determinantal Point Process (DPP) - Thompson sampling (the code is provided by the paper author [@elvisnava](https://github.com/elvisnava/)), [paper](https://arxiv.org/abs/2110.11665)
+- Thompson sampling: Kandasamy, K., Krishnamurthy, A., Schneider, J. and Póczos, B., 
+Parallelised Bayesian optimisation via Thompson sampling. International Conference on Artificial Intelligence and Statistics (AISTATS 2018) [code from BoTorch](https://botorch.org/tutorials/thompson_sampling), [paper](https://proceedings.mlr.press/v84/kandasamy18a.html)
+- Decoupled Thompson sampling: Wilson, J., Borovitskiy, V., Terenin, A., Mostowsky, P. and Deisenroth, M., Efficiently sampling functions from Gaussian process posteriors. International Conference on Machine Learning (ICML 2020) [code from @saitcakmak](https://github.com/saitcakmak/gp-sampling), [paper](https://arxiv.org/abs/2002.09309)
+- Determinantal Point Process (DPP) - Thompson sampling: Nava, E., Mutny, M. and Krause, A., Diversified sampling for batched bayesian optimization with determinantal point processes. International Conference on Artificial Intelligence and Statistics (AISTATS 2022)
+(the code is provided by the paper author [@elvisnava](https://github.com/elvisnava/)), [paper](https://arxiv.org/abs/2110.11665)
 - GIBBON [code from BoTorch](https://botorch.org/tutorials/GIBBON_for_efficient_batch_entropy_search). [paper](https://arxiv.org/abs/2102.03324)
 - Hallucination [paper](https://papers.nips.cc/paper_files/paper/2010/hash/e702e51da2c0f5be4dd354bb3e295d37-Abstract.html)
 - local penalisation [paper](https://proceedings.mlr.press/v51/gonzalez16a.html)
