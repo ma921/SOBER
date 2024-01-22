@@ -265,7 +265,10 @@ class ScaleMmltGP(Utils):
         mu_g_x = self.gspace_mean_predict(x)
         mu_g_y = self.gspace_mean_predict(y)
         cov_h_xy = self.hspace_kernel(x, y)
-        CLy = mu_g_x.unsqueeze(1) * mu_g_y.unsqueeze(0) * (cov_h_xy.exp() - 1)
+        if len(cov_h_xy.shape) == 2:
+            CLy = mu_g_x.unsqueeze(1) * mu_g_y.unsqueeze(0) * (cov_h_xy.exp() - 1)
+        elif len(cov_h_xy.shape) == 3:
+            CLy = mu_g_x.unsqueeze(1).unsqueeze(0) * mu_g_y.unsqueeze(1) * (cov_h_xy.exp() - 1)
 
         d = min(len(x), len(y))
         CLy[range(d), range(d)] = CLy[range(d), range(d)] + self.jitter
