@@ -408,9 +408,21 @@ class MixtureSampler:
         """
         n_wkde = int(self.ratio_wkde * n_samples)
         n_prior = int((1-self.ratio_wkde) * n_samples)
+
+        tm = TensorManager()
         
-        samples_wkde = self.sober.prior.sample(n_wkde)
-        samples_prior = self.prior.sample(n_prior)
+        if n_wkde:
+            samples_wkde = self.sober.prior.sample(n_wkde)
+        else:
+            samples_wkde = torch.zeros(
+                [0, self.sober.prior.n_dims], dtype=tm.dtype, device=tm.device
+            )
+        if n_prior:
+            samples_prior = self.prior.sample(n_prior)
+        else:
+            samples_prior = torch.zeros(
+                [0, self.sober.prior.n_dims], dtype=tm.dtype, device=tm.device
+            )
         samples = torch.vstack([samples_wkde, samples_prior])
         return samples
     
