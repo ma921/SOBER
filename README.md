@@ -81,10 +81,10 @@ Parallelised Bayesian optimisation via Thompson sampling. International Conferen
 ## Cite as
 Please cite this work as
 ```
-@inproceedings{adachi2023sober,
-  title={SOBER: Highly parallel Bayesian optimization and bayesian quadrature over discrete and mixed spaces},
-  author={Adachi, Masaki and Hayakawa, Satoshi and Hamid, Saad and J{\o}rgensen, Martin and Oberhauser, Harald and Osborne, Michael A},
-  booktitle={ICML 2023 Workshop: Sampling and Optimization in Discrete Space},
-  year={2023}
+@article{adachi2024a,
+  title={A Quadrature Approach for General-Purpose Batch Bayesian Optimization via Probabilistic Lifting},
+  author={Adachi, Masaki and Hayakawa, Satoshi and J{\o}rgensen, Martin and Hamid, Saad and Oberhauser, Harald and Osborne, Michael A},
+  journal={https://doi.org/10.48550/arXiv.2404.12219},
+  year={2024}
 }
 ```
