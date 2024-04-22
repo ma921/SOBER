@@ -1,3 +1,34 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "sober-bo"
+version = "1.2"
+description = "Fast Bayesian optimization, quadrature, inference over arbitrary domain (discrete and mixed spaces) with GPU parallel acceleration based on GPytorch and BoTorch."
+readme = "README.md"
+license = {text = "BSD 3-Clause License"}
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3",
+]
+authors = [
+  {name = "Masaki Adachi", email = "masaki@robots.ox.ac.uk"}
+]
+maintainers = [
+  {name = "Masaki Adachi", email = "masaki@robots.ox.ac.uk"}
+]
+requires-python = ">= 3.9"
+dependencies = [
+  'botorch >= 0.9.5',
+  'gpytorch >= 1.11',
+  'joblib',
+  'matplotlib',
+  'numpy',
+  'pandas',
+  'scipy',
+  'torch >= 1.13.1',
+]
