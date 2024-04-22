@@ -46,7 +46,7 @@ See `examples` for reproducing the results in the paper.
 ## Installation
 
 Please download the newest .whl file from [Releases](https://github.com/ma921/SOBER/releases).
-If you wish to build from source, `git clone` the repostory and run the following commands in the top folder:
+If you wish to build from source, `git clone` the repository and run the following commands in the top folder:
 ```
 pip install build
 python -m build
