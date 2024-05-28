@@ -1,7 +1,6 @@
 import time
 import torch
 from ._utils import SafeTensorOperator
-tm = SafeTensorOperator()
 
 def recombination(
     pts_rec,         # random samples for recombination
@@ -28,10 +27,11 @@ def recombination(
         - x: torch.tensor, the sparcified samples from pts_rec. The number of samples are determined by self.batch_size
         - w: torch.tensor, the positive weights for kernel quadrature as discretised summation.
     """
+    tm = SafeTensorOperator()
     return rc_kernel_svd(pts_rec, pts_nys, num_pts, kernel, tm, mu=init_weights, calc_obj=calc_obj)
 
 
-def ker_svd_sparsify(pt, s, kernel):
+def ker_svd_sparsify(pt, s, kernel, tm):
     mat = kernel(pt, pt)
     mat = tm.make_cov_psd(mat)
     _U, S, _ = torch.svd_lowrank(mat, q=s)
@@ -41,7 +41,7 @@ def ker_svd_sparsify(pt, s, kernel):
 
 def rc_kernel_svd(samp, pt, s, kernel, tm, mu=None, calc_obj=None):
     # Nystrom method
-    _, U = ker_svd_sparsify(pt, s - 1, kernel)
+    _, U = ker_svd_sparsify(pt, s - 1, kernel, tm)
     w_star, idx_star = Mod_Tchernychova_Lyons(
         samp, U, pt, kernel, tm, mu=mu, calc_obj=calc_obj
     )
