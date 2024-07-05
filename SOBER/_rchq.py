@@ -139,10 +139,10 @@ def Mod_Tchernychova_Lyons(samp, U_svd, pt_nys, kernel, tm, mu=None, calc_obj=No
             X_for_obj = tm.zeros(1, number_of_sets)
             X_for_obj += (
                 obj[_idx_tmp].unsqueeze(1) * mu[_idx_tmp].unsqueeze(1)
-            ).sum(axis=0).reshape(-1,1)
+            ).sum(axis=0)
             if N_rest > 0:
-                mat_obj = (obj[idx_rest].unsqueeze(0) * mu[idx_rest].unsqueeze(0)).reshape(-1,1)
-                mat_obj_pad = torch.cat((mat_obj, tm.zeros(number_of_sets - N_rest, 1)), dim=0)
+                mat_obj = (obj[idx_rest].unsqueeze(0) * mu[idx_rest].unsqueeze(0))
+                mat_obj_pad = torch.cat((mat_obj, tm.zeros(1, number_of_sets - N_rest)), dim=1)
                 X_for_obj += mat_obj_pad        
         
         X_tmp_tr = U_svd @ X_for_nys
