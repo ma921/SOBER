@@ -1,7 +1,7 @@
 # SOBER
 
 Fast Bayesian optimization, quadrature, inference over arbitrary domain (discrete and mixed spaces) with GPU parallel acceleration based on GPytorch and BoTorch.
-The paper is here [arXiv](https://arxiv.org/abs/2301.11832),
+The paper is here [arXiv](https://doi.org/10.48550/arXiv.2404.12219),
 
 ![Animate](./docs/animated_with_plot.gif)
 
