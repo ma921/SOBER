@@ -1,7 +1,7 @@
 import torch
 from botorch.models import SingleTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.models.transforms import Standardize
 
 
@@ -25,5 +25,5 @@ def generate_random_gp(dim: int, num_train: int, standardized: bool = True):
     train_Y = torch.rand(num_train, 1)
     model = SingleTaskGP(train_X, train_Y, outcome_transform=transform)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return model

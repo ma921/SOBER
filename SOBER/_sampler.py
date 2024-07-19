@@ -436,5 +436,8 @@ class MixtureSampler:
         Returns:
             - samples: torch.tensor, the samples from mixture density
         """
-        pdfs = self.sober.prior.pdf(X)/2 + self.prior.pdf(X)/2
+        pdfs = (
+            self.ratio_wkde * self.sober.prior.pdf(X)
+            + (1 - self.ratio_wkde) * self.prior.pdf(X)
+        )
         return pdfs
