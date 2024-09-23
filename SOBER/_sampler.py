@@ -423,6 +423,10 @@ class MixtureSampler:
             samples_prior = torch.zeros(
                 [0, self.sober.prior.n_dims], dtype=tm.dtype, device=tm.device
             )
+        # Fixes the symptom, not the issue: WKDE sometimes gives
+        # 0 results, and rather than shape [0, dim], it will be [0].
+        if samples_wkde.shape == torch.Size([0]):
+            samples_wkde = torch.zeros((0, samples_prior.shape[1]))
         samples = torch.vstack([samples_wkde, samples_prior])
         return samples
     
