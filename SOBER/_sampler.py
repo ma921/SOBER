@@ -423,6 +423,10 @@ class MixtureSampler:
             samples_prior = torch.zeros(
                 [0, self.sober.prior.n_dims], dtype=tm.dtype, device=tm.device
             )
+        # Fixes the symptom, not the issue: WKDE sometimes gives
+        # 0 results, and rather than shape [0, dim], it will be [0].
+        if samples_wkde.shape == torch.Size([0]):
+            samples_wkde = torch.zeros((0, samples_prior.shape[1]))
         samples = torch.vstack([samples_wkde, samples_prior])
         return samples
     
@@ -436,5 +440,8 @@ class MixtureSampler:
         Returns:
             - samples: torch.tensor, the samples from mixture density
         """
-        pdfs = self.sober.prior.pdf(X)/2 + self.prior.pdf(X)/2
+        pdfs = (
+            self.ratio_wkde * self.sober.prior.pdf(X)
+            + (1 - self.ratio_wkde) * self.prior.pdf(X)
+        )
         return pdfs

@@ -1,7 +1,7 @@
 import torch
 import warnings
 import gpytorch
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from gpytorch.priors.torch_priors import GammaPrior
 
 
@@ -172,7 +172,7 @@ def train_GP(model, training_iter=50, thresh=0.01, lr=0.1, optimiser="BoTorch"):
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(model.likelihood, model)
     try:
         if optimiser == "BoTorch":
-            mll = fit_gpytorch_model(mll)
+            mll = fit_gpytorch_mll(mll)
         elif optimiser == "L-BFGS-B":
             mll = train_GP_with_BFGS(mll, training_iter, thresh)
 

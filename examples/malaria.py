@@ -6,7 +6,7 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.constraints import Interval
 from botorch.models import SingleTaskGP
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 
 import os
 import sys
@@ -51,7 +51,7 @@ def fit_model(X, Y):
     """
     model = set_tanimoto_gp_model(X, Y)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return model
 
 

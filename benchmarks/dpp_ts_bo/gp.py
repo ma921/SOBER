@@ -2,7 +2,7 @@
 from typing import Tuple
 import torch
 import gpytorch
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 
 class GP():
     """GP class with additional methods."""
@@ -43,7 +43,7 @@ class GP():
         # Set to Scipy defaults.
         model = self.GP
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_model(mll)
+        fit_gpytorch_mll(mll)
         return None
 
     def mean_var(
