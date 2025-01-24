@@ -6,8 +6,8 @@ from gpytorch.kernels import ScaleKernel, RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from math import exp, log
-from mecbo.BOLFI.botorch_acquisition import SOBERUCB
-from mecbo.BOLFI.gpytorch_bolfi_model import BOLFIModel
+from .BOLFI.botorch_acquisition import SOBERUCB
+from .BOLFI.gpytorch_bolfi_model import BOLFIModel
 from multiprocessing import Pool
 from scipy.stats import chi2
 from ._prior import Uniform, Gaussian, TruncatedGaussian
