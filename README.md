@@ -26,9 +26,12 @@ In the paper, SOBER outperformed 11 competitive baselines on 12 synthetic and di
 - Arbitrary kernel for surrogate modelling
 - Arbitrary acquisition function
 - Arbitrary prior distribution for Bayesian inference
+- Expectation Propagation for feature-by-feature Bayesian Optimization
+- inverse modelling for training Gaussian Processes as fast optimization surrogates
 
 ## Tutorials for practitioners/researchers
-We prepared detailed explanations about how to customize SOBER for your tasks. <br>
+To get started with SOBER with minimal issues, use [the guided interface](SOBER/_sober_wrapper.py). This will show you the customization options with SOBER. <br>
+We also prepared detailed explanations about how to customize SOBER for your tasks, which use SOBER directly for a greater depth of understanding. <br>
 See `tutorials`.
 - 00 Quick start
 - 01 How does SOBER work?

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sober-bo"
-version = "1.2"
+version = "2.0"
 description = "Fast Bayesian optimization, quadrature, inference over arbitrary domain (discrete and mixed spaces) with GPU parallel acceleration based on GPytorch and BoTorch."
 readme = "README.md"
 license = {text = "BSD 3-Clause License"}
