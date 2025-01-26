@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Yannick Kuhn <Yannick.Kuhn@dlr.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from botorch.acquisition.analytic import UpperConfidenceBound
 from botorch.generation.gen import gen_candidates_torch, get_best_candidates
 from botorch.optim.initializers import gen_batch_initial_conditions

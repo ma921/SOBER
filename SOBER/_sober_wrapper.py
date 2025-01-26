@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Yannick Kuhn <Yannick.Kuhn@dlr.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from copy import deepcopy
@@ -13,8 +17,8 @@ from scipy.stats import chi2
 from ._prior import Uniform, Gaussian, TruncatedGaussian
 from ._sober import Sober
 from ._utils import TensorManager
-from BASQ._basq import BASQ
-from BASQ._scale_mmlt import ScaleMmltGP
+from .BASQ._basq import BASQ
+from .BASQ._scale_mmlt import ScaleMmltGP
 import time
 import torch
 import warnings

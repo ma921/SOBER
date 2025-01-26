@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Yannick Kuhn <Yannick.Kuhn@dlr.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._sober_wrapper import SoberWrapper
 from ._prior import TruncatedGaussian
 import torch

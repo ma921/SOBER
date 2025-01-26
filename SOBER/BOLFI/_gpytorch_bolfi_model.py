@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Yannick Kuhn <Yannick.Kuhn@dlr.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from botorch.models.gp_regression import SingleTaskGP
 import gpytorch
 from gpytorch.constraints import Positive

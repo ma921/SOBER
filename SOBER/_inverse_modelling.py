@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Yannick Kuhn <Yannick.Kuhn@dlr.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
