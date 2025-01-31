@@ -7,6 +7,7 @@ from scipy import optimize
 
 EPS = 10e-15
 
+
 class TruncatedMVN:
     """
     Create a normal distribution :math:`X  \sim N ({\mu}, {\Sigma})` subject to linear inequality constraints
@@ -47,11 +48,11 @@ class TruncatedMVN:
     """
 
     def __init__(self, mu, cov, bounds, seed=None):
-        mu = mu.numpy()
-        cov = cov.numpy()
-        lb = bounds[0].numpy()
-        ub = bounds[1].numpy()
-        
+        mu = mu.cpu().numpy()
+        cov = cov.cpu().numpy()
+        lb = bounds[0].cpu().numpy()
+        ub = bounds[1].cpu().numpy()
+
         self.dim = len(mu)
         if not cov.shape[0] == cov.shape[1]:
             raise RuntimeError("Covariance matrix must be of shape DxD!")
@@ -63,7 +64,7 @@ class TruncatedMVN:
         self.orig_mu = mu
         self.orig_lb = lb
         self.orig_ub = ub
-        
+
         # permutated
         self.lb = lb - mu  # move distr./bounds to have zero mean
         self.ub = ub - mu  # move distr./bounds to have zero mean
@@ -126,7 +127,7 @@ class TruncatedMVN:
         # retransfer to original mean
         rv += np.tile(self.orig_mu.reshape(self.dim, 1), (1, rv.shape[-1]))  # Z = X + mu
         return torch.from_numpy(rv).float().T
-    
+
     def compute_factors(self):
         # compute permutated Cholesky factor and solve optimization
 
@@ -157,7 +158,7 @@ class TruncatedMVN:
 
         # compute psi star
         self.psistar = self.psy(self.x, self.mu)
-        
+
     def reset(self):
         # reset factors -> when sampling, optimization for optimal tilting parameters is performed again
 
@@ -426,4 +427,3 @@ def lnPhi(x):
     # computes logarithm of  tail of Z~N(0,1) mitigating numerical roundoff errors
     out = -0.5 * x ** 2 - np.log(2) + np.log(special.erfcx(x / np.sqrt(2)) + EPS)  # divide by zeros error -> add eps
     return out
-

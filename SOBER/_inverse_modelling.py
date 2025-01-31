@@ -285,7 +285,7 @@ class InverseModel(SoberWrapper):
         else:
             deviations = chi2(self.input_dim).ppf(confidence)**0.5
         if not isinstance(observations, torch.Tensor):
-            observations = torch.Tensor(observations)
+            observations = torch.tensor(observations)
         if observations.dim() == 1:
             observations = observations.unsqueeze(0)
         raw_prediction = self(observations)
@@ -319,7 +319,7 @@ class InverseModel(SoberWrapper):
             A torch.Tensor of the samples.
         """
         if not isinstance(observations, torch.Tensor):
-            observations = torch.Tensor(observations)
+            observations = torch.tensor(observations)
         if observations.dim() == 1:
             observations = observations.unsqueeze(0)
         raw_prediction = self(observations)

@@ -136,6 +136,18 @@ class SoberWrapper:
 
         self.tm = TensorManager()
 
+        # Inform about multiprocessing-related issues.
+        if parallelization and "cuda" in str(self.tm.device):
+            raise ValueError(
+                "Automatic CPU parallelization is not supported for GPU "
+                "computations, since optimizer states get lost in memory. "
+                "If you just wish to have the optimiser on GPU, "
+                "we recommend a simple serial for-loop over the batch "
+                "of parameter sets in your model and parallelization=False. "
+                "In general, the performance benefit would be higher "
+                "if your model supported disable_numpy_mode=True as well."
+            )
+
         self.model = model
         self.model_kwargs = kwargs
         self.data = data
@@ -209,6 +221,9 @@ class SoberWrapper:
             ]))
         elif prior == 'Gaussian':
             _, self.diagonalization = torch.linalg.eigh(covariance)
+            self.diagonalization = self.diagonalization.to(
+                device=self.tm.device, dtype=self.tm.dtype
+            )
             self.prior = Gaussian(
                 self.normalize_input(batched_and_transformed_mean)[0],
                 (0.5 / 4)**2 * torch.diag(torch.ones(self.input_dim))
@@ -269,7 +284,7 @@ class SoberWrapper:
         if self.true_optimum is not None:
             self.normalized_true_optimum = self.normalize_input(
                 self.apply_transform(
-                    torch.atleast_2d(torch.Tensor(self.true_optimum))
+                    torch.atleast_2d(torch.tensor(self.true_optimum))
                 )
             )[0]
         else:
@@ -456,7 +471,7 @@ class SoberWrapper:
         if self.disable_numpy_mode:
             return self.model(x, **self.model_kwargs)
         else:
-            return torch.Tensor(self.model(
+            return torch.tensor(self.model(
                 x.cpu().detach().numpy(), **self.model_kwargs
             )).to(device=self.tm.device, dtype=self.tm.dtype)
 
@@ -961,7 +976,7 @@ class SoberWrapper:
             orig_order_samples = torch.zeros_like(taken_samples)
             for par_index, raw_index in enumerate(self.diag_order):
                 orig_order_samples.T[par_index] = taken_samples.T[raw_index]
-            df = DataFrame(orig_order_samples.numpy())
+            df = DataFrame(orig_order_samples.cpu().numpy())
             if verbose:
                 df.describe()
             pairgrid = pairplot(df, kind='kde')
