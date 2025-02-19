@@ -555,10 +555,10 @@ class SoberWrapper:
             ]
             try:
                 with Pool() as p:
-                    evaluations = p.starmap(
+                    evaluations = torch.stack(p.starmap(
                         SoberWrapper.parallelizable_model_wrapper,
                         parallel_input
-                    )
+                    ))
             except AttributeError as e:
                 raise AttributeError(
                     "The 'model' must be defined in a global scope, else "
