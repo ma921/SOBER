@@ -46,6 +46,7 @@ class SoberWrapper:
         visualizations=False,
         true_optimum=None,
         standalone=True,
+        names=None,
         **kwargs
     ):
         """
@@ -126,6 +127,10 @@ class SoberWrapper:
             By default, when initializing an object of this class
             directly, this is True and will initialize SOBER.
             Will be set to False by inheriting classes if necessary.
+        :param names:
+            Optional list of names for the individual dimensions of the
+            prior, i.e., the model parameters that are optimized. Only
+            used for visualization purposes.
         :param **kwargs:
             Additional keyword arguments will be passed to the `model`.
         """
@@ -151,6 +156,7 @@ class SoberWrapper:
         self.model = model
         self.model_kwargs = kwargs
         self.data = data
+        self.names = names
 
         if bounds is not None:
             self.input_dim = len(bounds[0])
@@ -294,7 +300,9 @@ class SoberWrapper:
             device=self.tm.device, dtype=self.tm.dtype
         )
         if visualizations:
-            pairgrid = pairplot(DataFrame(self.tm.numpy(self.X_all)))
+            pairgrid = pairplot(
+                DataFrame(self.tm.numpy(self.X_all)), columns=self.names
+            )
             pairgrid.figure.suptitle("correlation plot of prior sampling")
             if self.normalized_true_optimum is not None:
                 for i in range(len(self.true_optimum)):
@@ -976,7 +984,9 @@ class SoberWrapper:
             orig_order_samples = torch.zeros_like(taken_samples)
             for par_index, raw_index in enumerate(self.diag_order):
                 orig_order_samples.T[par_index] = taken_samples.T[raw_index]
-            df = DataFrame(orig_order_samples.cpu().numpy())
+            df = DataFrame(
+                orig_order_samples.cpu().numpy(), columns=self.names
+            )
             if verbose:
                 df.describe()
             pairgrid = pairplot(df, kind='kde')
