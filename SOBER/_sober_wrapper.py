@@ -301,9 +301,11 @@ class SoberWrapper:
         )
         if visualizations:
             pairgrid = pairplot(
-                DataFrame(self.tm.numpy(self.X_all)), columns=self.names
+                DataFrame(self.tm.numpy(self.X_all), columns=self.names)
             )
-            pairgrid.figure.suptitle("correlation plot of prior sampling")
+            pairgrid.figure.suptitle(
+                "correlation plot of prior sampling (normalized to [0,1]^d)"
+            )
             if self.normalized_true_optimum is not None:
                 for i in range(len(self.true_optimum)):
                     pairgrid.axes[i][i].scatter(
