@@ -174,9 +174,14 @@ class SoberWrapper:
                 self.transforms[i] = (lambda x: x, lambda x: x)
         if mean is not None:
             self.mean = mean
-            batched_and_transformed_mean = self.apply_transform(
-                torch.atleast_2d(deepcopy(mean))
-            )
+        else:  # bounds is not None
+            self.mean = self.reverse_transform(0.5 * (
+                self.apply_transform(torch.atleast_2d(deepcopy(bounds[0])))
+                + self.apply_transform(torch.atleast_2d(deepcopy(bounds[1])))
+            ))
+        batched_and_transformed_mean = self.apply_transform(
+            torch.atleast_2d(deepcopy(self.mean))
+        )
 
         if bounds is not None:
             self.bounds = bounds.to(device=self.tm.device, dtype=self.tm.dtype)
