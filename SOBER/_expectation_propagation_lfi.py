@@ -7,7 +7,7 @@ from ._prior import TruncatedGaussian
 import torch
 
 
-class ExpectationPropagation(SoberWrapper):
+class ExpectationPropagationLFI(SoberWrapper):
 
     def __init__(
         self,
@@ -31,8 +31,7 @@ class ExpectationPropagation(SoberWrapper):
         :param model:
             A method that takes an array of numbers and returns an array
             of numbers. These are intended to be parameters and model
-            evaluation, respectively. This method will provide the
-            training data throughout the inverse model training.
+            evaluation, respectively.
         :param data:
             The data that `model` will be fitted to. Has to have the
             same shape as the return value of model`. If not set,
