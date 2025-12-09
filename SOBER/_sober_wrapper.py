@@ -784,53 +784,54 @@ class SoberWrapper:
             # For some reason, calling this too early would not get rid
             # of the superfluous "input matches training data" error.
             warnings.simplefilter("ignore")
-            self.sober.update_model(self.surrogate_model)
-            if acquisition_function is None and self.use_bolfi:
-                acquisition_function = SOBERUCB(
-                    self.surrogate_model, sample_size=len(self.X_all)
+            with torch.no_grad():
+                self.sober.update_model(self.surrogate_model)
+                if acquisition_function is None and self.use_bolfi:
+                    acquisition_function = SOBERUCB(
+                        self.surrogate_model, sample_size=len(self.X_all)
+                    )
+                X_batch = self.sober.next_batch(
+                    surrogate_samples,
+                    surrogate_effective_samples,
+                    model_samples_per_iteration,
+                    calc_obj=acquisition_function,
+                    verbose=verbose
                 )
-            X_batch = self.sober.next_batch(
-                surrogate_samples,
-                surrogate_effective_samples,
-                model_samples_per_iteration,
-                calc_obj=acquisition_function,
-                verbose=verbose
-            )
-            self.surrogate_effective_samples = surrogate_effective_samples
-            time_end = time.monotonic()
-            time_interval = time_end - time_start
-            self.X_all = torch.cat((self.X_all, X_batch), dim=0)
-            Y_batch, LL_batch = self.objective_and_loglikelihood_function(
-                X_batch, sober_batch=True
-            )
-            # De-normalize Y_all before mixing it with Y_batch.
-            self.Y_all = self.Y_all_mean + self.Y_all_std * self.Y_all
-            self.Y_all = torch.cat((self.Y_all, Y_batch), dim=0)
-            # Now normalize the new Y_all.
-            self.Y_all_mean = self.Y_all.mean()
-            self.Y_all_std = self.Y_all.std()
-            self.Y_all = (self.Y_all - self.Y_all_mean) / self.Y_all_std
-            self.LL_all = torch.cat((self.LL_all, LL_batch), dim=0)
-            Y_all_denorm = self.Y_all_mean + self.Y_all_std * self.Y_all
-            if verbose:
-                print(
-                    f"{len(self.X_all)}) "
-                    f"Best objective: {Y_all_denorm.max().item():.5e} "
-                    f"Best Log-Likelihood: {self.LL_all.max().item():.5e}"
+                self.surrogate_effective_samples = surrogate_effective_samples
+                time_end = time.monotonic()
+                time_interval = time_end - time_start
+                self.X_all = torch.cat((self.X_all, X_batch), dim=0)
+                Y_batch, LL_batch = self.objective_and_loglikelihood_function(
+                    X_batch, sober_batch=True
                 )
-                mspersample = time_interval / model_samples_per_iteration * 1e3
-                print(
-                    f"Acquisition time [s]: {time_interval:.5e}, "
-                    f"per sample [ms]: {mspersample:.5e}"
-                )
-            self.results.append([time_interval, Y_all_denorm.max().item()])
-            self.total_sober_iterations += 1
-            if self.total_model_samples:
-                self.total_model_samples.append(
-                    self.total_model_samples[-1] + model_samples_per_iteration
-                )
-            else:
-                self.total_model_samples.append(model_samples_per_iteration)
+                # De-normalize Y_all before mixing it with Y_batch.
+                self.Y_all = self.Y_all_mean + self.Y_all_std * self.Y_all
+                self.Y_all = torch.cat((self.Y_all, Y_batch), dim=0)
+                # Now normalize the new Y_all.
+                self.Y_all_mean = self.Y_all.mean()
+                self.Y_all_std = self.Y_all.std()
+                self.Y_all = (self.Y_all - self.Y_all_mean) / self.Y_all_std
+                self.LL_all = torch.cat((self.LL_all, LL_batch), dim=0)
+                Y_all_denorm = self.Y_all_mean + self.Y_all_std * self.Y_all
+                if verbose:
+                    print(
+                        f"{len(self.X_all)}) "
+                        f"Best objective: {Y_all_denorm.max().item():.5e} "
+                        f"Best Log-Likelihood: {self.LL_all.max().item():.5e}"
+                    )
+                    mspersample = time_interval / model_samples_per_iteration * 1e3
+                    print(
+                        f"Acquisition time [s]: {time_interval:.5e}, "
+                        f"per sample [ms]: {mspersample:.5e}"
+                    )
+                self.results.append([time_interval, Y_all_denorm.max().item()])
+                self.total_sober_iterations += 1
+                if self.total_model_samples:
+                    self.total_model_samples.append(
+                        self.total_model_samples[-1] + model_samples_per_iteration
+                    )
+                else:
+                    self.total_model_samples.append(model_samples_per_iteration)
 
         if visualizations:
             self.visualize_results()
