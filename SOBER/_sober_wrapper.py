@@ -198,11 +198,11 @@ class SoberWrapper:
         elif mean is not None and covariance is not None:
             self.bounds = torch.stack([
                 (
-                    batched_and_transformed_mean
+                    batched_and_transformed_mean[0]
                     - 4 * torch.sqrt(torch.diag(covariance))
                 ),
                 (
-                    batched_and_transformed_mean
+                    batched_and_transformed_mean[0]
                     + 4 * torch.sqrt(torch.diag(covariance))
                 ),
             ]).to(device=self.tm.device, dtype=self.tm.dtype)
