@@ -220,7 +220,7 @@ class SoberWrapper:
                 covariance = torch.diag(
                     (self.bounds[1] - self.bounds[0])
                     / (2 * chi2(self.input_dim).ppf(0.95)**0.5)
-                )
+                )**2
 
         if prior == 'Uniform':
             self.diagonalization = torch.diag(torch.ones(self.input_dim))
